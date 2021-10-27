@@ -108,6 +108,9 @@ class Configure:
                     for icon2_env in self.config['reference'].get('icon2_default').keys():
                         if self.config['settings']['icon2'].get(icon2_env, None) is None:
                             self.config['settings']['icon2'][icon2_env] = os.getenv(icon2_env)
+                    self.config['settings']['icon2']['GOLOOP_BACKUP_DIR'] = f"{os.getenv('BASE_DIR')}/data/backup"
+                    self.config['settings']['icon2']['GOLOOP_EE_SOCKET'] = f"{os.getenv('BASE_DIR')}/data/ee.sock"
+                    self.config['settings']['icon2']['GOLOOP_NODE_SOCK'] = f"{os.getenv('BASE_DIR')}/data/cli.sock"
                     if self.config['settings']['env'].get('GOLOOP_P2P'):
                         self.config['settings']['icon2']['GOLOOP_P2P'] = self.config['settings']['env']['GOLOOP_P2P']
                     elif self.compose_env['LOCAL_TEST'] is True:
