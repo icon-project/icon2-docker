@@ -79,7 +79,7 @@ $ tail -f logs/goloop.log
 ```
 
 
-The subdirectories(data, config, icon, logs … ) are created by docker engine, but config directory needs to importing your keystore file.
+The directories(data, config, icon, logs …) are created by docker engine, but config directory needs to importing your keystore file.
 
 ```
 .
@@ -117,12 +117,11 @@ The subdirectories(data, config, icon, logs … ) are created by docker engine, 
 | CONFIG_URL         |                        | str  | false    |                                                                                  |
 | CONFIG_URL_FILE    | default_configure.json | str  | false    |                                                                                  |
 | CONFIG_LOCAL_FILE  | configure.json         | str  | false    |                                                                                  |
-| BASE_DIR           | /goloop                | str  | false    |                                                                                  |
-| IS_AUTOGEN_CERT    | false                  | bool | false    |  Automatically generate certificates                                             |
-| FASTEST_START      | false                  | bool | false    |  Download snapshot DB                                                            |
+| IS_AUTOGEN_CERT    | false                  | bool | false    | Automatically generate certificates                                              |
+| FASTEST_START      | false                  | bool | false    | Download snapshot DB                                                             |
 | KEY_STORE_FILENAME | keystore.json          | str  | true     | keystore.json file name                                                          |
 | KEY_PASSWORD       |                        | str  | true     | password of keystore.json file                                                   |
-| NTP_SERVER         |                        |      |          |  NTP Server                                                                      |
+| NTP_SERVER         |                        |      |          | NTP Server                                                                       |
 | NTP_REFRESH_TIME   |                        | int  | false    | ntp refresh time                                                                 |
 | SLACK_WH_URL       |                        | str  | false    | slack web hook url - If a problem occurs, you can receive an alarm with a slack. |
 | CHECK_TIMEOUT      | 10                     | int  | false    | sec - TIMEOUT when calling REST API for monitoring                               |
