@@ -167,6 +167,9 @@ class Restore:
             self.download()
             self.check_downloaded_file()
 
+            if self.checksum_result.get("status") == "FAIL":
+                raise Exception(f"File checksum error")
+
     def _prepare(self):
         self.restore_path = os.path.join(self.db_path, self.download_path)
         self.create_directory(self.restore_path)
@@ -204,6 +207,7 @@ class Restore:
             self.cfg.logger.info(f'[RESTORE] Invalid url or service name, url={download_info_res}, status={download_info_res.status_code} ')
 
     def check_downloaded_file(self):
+        self.checksum_result = {}
         with open(self.log_files['download_error'], 'r') as file:
             contents = file.read().strip()
             if contents:
@@ -222,7 +226,7 @@ class Restore:
             if self.checksum_result.get("status") == "FAIL":
                 for file, result in self.checksum_result.items():
                     self.cfg.logger.error(f"[RESTORE][ERROR] {file}, {result}")
-            raise Exception(f"File checksum error")
+            # raise Exception(f"File checksum error")
 
     def _get_file_locate(self, url):
         full_path = None
@@ -246,7 +250,6 @@ class Restore:
 
         return full_path_filename
 
-    #  class main run function
     def download(self):
         run_start_time = default_timer()
         cmd_opt = f'-V -j10 -x8 --http-accept-gzip --disk-cache=64M  ' \

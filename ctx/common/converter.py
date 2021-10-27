@@ -111,6 +111,7 @@ def long_to_bytes(val, endianness='big'):
 
 def format_seconds_to_hhmmss(seconds):
     try:
+        seconds = int(seconds)
         hours = seconds // (60*60)
         seconds %= (60*60)
         minutes = seconds // 60
