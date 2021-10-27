@@ -60,12 +60,13 @@ class NTPDaemon:
             ntp_servers = self.config['settings']['env'].get('NTP_SERVERS')
         else:
             ntp_servers = self.config['settings']['env']['COMPOSE_ENV'].get('NTP_SERVERS')
+        print(ntp_servers)
         cmd = "nmap -sU -p 123 " + " ".join(ntp_servers.split(",")) + " | grep up -B 1"
         self.cfg.logger.info(f"compare_cmd={cmd}")
         rs, _ = self.ntp_run(cmd)
         rs_dict = dict()
         for i, r in enumerate(rs):
-            for ntp in self.config['settings']['env'].get('NTP_SERVERS').split(","):
+            for ntp in ntp_servers.split(","):
                 if ntp in r:
                     if len(rs) == i+1:
                         break
