@@ -167,8 +167,8 @@ class Restore:
             self.download()
             self.check_downloaded_file()
 
-            if self.checksum_result.get("status") == "FAIL":
-                raise Exception(f"File checksum error")
+        if self.checksum_result.get("status") == "FAIL":
+            raise Exception(f"File checksum error")
 
     def _prepare(self):
         self.restore_path = os.path.join(self.db_path, self.download_path)
