@@ -59,7 +59,7 @@ class Configure:
     def init_logger(self, log_file=None, log_level='debug', log_stdout=False):
         logger = CL(log_file.upper())
         logger.set_level(log_level.upper())
-        if log_stdout or self.config['settings']['env']['COMPOSE_ENV'].get('DOCKER_LOG_STDOUT', False):
+        if log_stdout or self.config['settings']['env']['COMPOSE_ENV'].get('DOCKER_LOG_STDOUT', False) is True:
             logger.stream_handler(log_level.upper())
         logger.time_rotate_handler(
             filename=f"{self.log_dir}/{log_file}",
@@ -110,7 +110,7 @@ class Configure:
                             self.config['settings']['icon2'][icon2_env] = os.getenv(icon2_env)
                     if self.config['settings']['env'].get('GOLOOP_P2P'):
                         self.config['settings']['icon2']['GOLOOP_P2P'] = self.config['settings']['env']['GOLOOP_P2P']
-                    elif self.compose_env['LOCAL_TEST']:
+                    elif self.compose_env['LOCAL_TEST'] is True:
                         private_ip = get_local_ip()
                         port = self.config['settings']['icon2'].get('GOLOOP_P2P_LISTEN', ':8080').split(':')[-1]
                         self.config['settings']['icon2']['GOLOOP_P2P'] = f"{private_ip}:{port}"
