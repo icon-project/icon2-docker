@@ -113,7 +113,7 @@ The directories(data, config, icon, logs …) are created by docker engine, but 
 | Name               | default                | type | required | description                                                                      |
 |--------------------|------------------------|------|----------|----------------------------------------------------------------------------------|
 | SERVICE            | MainNet                | str  | false    |  Service Name - (MainNet, SejongNet)                                             |
-| ROLE               | 0                      | int  | true     | Role of running node. 0: Citizen 3: P-Rep                                        |
+| ROLE               | 0                      | int  | true     | Role of running node. 0: Citizen, 3: P-Rep                                       |
 | CONFIG_URL         |                        | str  | false    |                                                                                  |
 | CONFIG_URL_FILE    | default_configure.json | str  | false    |                                                                                  |
 | CONFIG_LOCAL_FILE  | configure.json         | str  | false    |                                                                                  |
