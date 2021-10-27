@@ -217,7 +217,7 @@ class Restore:
             prefix="").check()
 
         if self.checksum_result.get('status') == "OK":
-            self.cfg.logger.info(f"[RESTORE] Completed checksum of downloaded file. status={check_res['status']}")
+            self.cfg.logger.info(f"[RESTORE] Completed checksum of downloaded file. status={self.checksum_result['status']}")
         else:
             if self.checksum_result.get("status") == "FAIL":
                 for file, result in self.checksum_result.items():
