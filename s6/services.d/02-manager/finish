@@ -1,0 +1,17 @@
+#!/usr/bin/execlineb -S2
+
+define exit_code ${1}
+
+# if we receive an exit code between 0 and 255, then exit accordingly with the given value
+ifelse { s6-test ${exit_code} -ne 0 } {
+    foreground {
+        foreground { s6-echo "task ${TASK_NAME} exiting with exit code ${exit_code}" }
+        redirfd -w 1 /var/run/s6/env-stage3/S6_STAGE2_EXITED s6-echo -n -- ${exit_code}
+    }
+    s6-svscanctl -t /var/run/s6/services
+}
+
+# otherwise stop the service
+if { s6-test ${exit_code} -eq 0 }
+foreground { s6-echo "task ${TASK_NAME} exiting successfully" }
+s6-svscanctl -t /var/run/s6/services

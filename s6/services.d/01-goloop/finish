@@ -1,3 +1,9 @@
-#!/usr/bin/execlineb -S0
+#!/usr/bin/with-contenv bash
+
+source /goloop/.env
+
+if [[ -f $GOLOOP_NODE_SOCK ]]; then
+    rm -f $GOLOOP_NODE_SOCK
+fi
 
 s6-svscanctl -t /var/run/s6/services
