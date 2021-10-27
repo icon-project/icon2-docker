@@ -10,7 +10,7 @@ if [[ "$GOLOOP_CONFIG" != "" && ! -f "$GOLOOP_CONFIG" ]]; then
     CMD="goloop server save $GOLOOP_CONFIG"
     if [[ "$GOLOOP_KEY_SECRET" != "" && ! -f "$GOLOOP_KEY_SECRET" ]]; then
         mkdir -p $(dirname $GOLOOP_KEY_SECRET)
-        echo -n $(date|md5sum|head -c16) > $GOLOOP_KEY_SECRET
+        echo -n ${KEY_PASSWORD} > ${GOLOOP_KEY_SECRET}
     fi
     if [[ "$GOLOOP_KEY_STORE" != "" && ! -f "$GOLOOP_KEY_STORE" ]]; then
         UNSET="$UNSET GOLOOP_KEY_STORE"

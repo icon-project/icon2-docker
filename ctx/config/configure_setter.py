@@ -48,11 +48,17 @@ class ConfigureSetter:
             keystore_filename = self.config['settings']['icon2'].get('GOLOOP_KEY_STORE', 'keystore.json').split('/')[-1]
 
         if is_file(f"{self.config_dir}/{keystore_filename}") is False or self.config['settings']['env'].get('KEY_RESET', False) is True:
-            wallet = WalletLoader(f"{self.config_dir}/{keystore_filename}", keysecret_passwd, keysecret_filename)
-            wallet.create_wallet()
-            write_file(f'{keysecret_filename}', keysecret_passwd)
-            self.cfg.logger.info(f"Create a keystore, filename={keystore_filename}, address={wallet.wallet.get_address()}")
+            if self.cfg.config['settings']['env'].get('IS_AUTOGEN_CERT') is True:
+                wallet = WalletLoader(f"{self.config_dir}/{keystore_filename}", keysecret_passwd, keysecret_filename, force_sync=True)
+                wallet.create_wallet()
+                write_file(f'{keysecret_filename}', keysecret_passwd)
+                self.cfg.logger.info(f"Create a keystore, filename={keystore_filename}, address={wallet.wallet.get_address()}")
         else:
+            write_file(f'{keysecret_filename}', keysecret_passwd)
+            self.cfg.logger.info(write_file(f'{keysecret_filename}', keysecret_passwd))
+            wallet = WalletLoader(f"{self.config_dir}/{keystore_filename}", keysecret_passwd, keysecret_filename)
+            wallet.get_wallet()
+
             self.cfg.logger.info(f"Already keystore file - {keystore_filename}")
 
     def create_genesis_json(self, ):

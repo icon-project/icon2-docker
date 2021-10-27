@@ -171,7 +171,8 @@ class WalletLoader:
             if output.is_file(self.keysecret_filename):
                 keysecret = output.open_file(self.keysecret_filename)
                 if keysecret != self.password:
-                    self.print_logging(f"keysecret({keysecret}) and password({self.password}) are different", "red")
+                    # self.print_logging(f"keysecret({keysecret}) and password({self.password}) are different", "red")
+                    self.print_logging(f"keysecret and password are different", "red")
             self.wallet = KeyWallet.load(self.filename, self.password)
         else:
             self.wallet = self.from_prikey_file()

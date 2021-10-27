@@ -36,8 +36,8 @@ class InitManager:
         self.cs.create_yaml_file()
         self.cs.create_env_file()
         self.cs.make_base_dir()
-        if self.cfg.config['settings']['env'].get('IS_AUTOGEN_CERT') is True:
-            self.cs.create_key()
+        # if self.cfg.config['settings']['env'].get('IS_AUTOGEN_CERT') is True:
+        self.cs.create_key()
         self.cs.create_genesis_json()
         self.cs.create_gs_zip()
         self.cs.create_icon_config()
