@@ -29,12 +29,14 @@ class InitManager:
         if settings:
             for key, value in settings.items():
                 if key != "COMPOSE_ENV":
+                    if key == 'KEY_PASSWORD' and len(value):
+                        value = '*' * len(str(value))
                     self.cfg.logger.info(f"[DOCKER_ENV] {key} = {value} ({type(value).__name__})")
 
         self.cs.create_yaml_file()
         self.cs.create_env_file()
         self.cs.make_base_dir()
-        if self.cfg.config['settings']['env'].get('IS_AUTOGEN_CERT'):
+        if self.cfg.config['settings']['env'].get('IS_AUTOGEN_CERT') is True:
             self.cs.create_key()
         self.cs.create_genesis_json()
         self.cs.create_gs_zip()

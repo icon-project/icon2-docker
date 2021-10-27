@@ -37,7 +37,7 @@ class ConfigureSetter:
             os.remove(_ee_sock)
 
     def create_key(self, ):
-        self.cfg.logger.info(f"Start create_key()")
+        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         if not os.path.exists(self.base_dir):
             self.make_base_dir()
         keysecret_passwd = self.config['settings']['env'].get('KEY_PASSWORD', self.config['settings']['env']['COMPOSE_ENV'].get('KEY_PASSWORD'))
@@ -47,7 +47,7 @@ class ConfigureSetter:
         if keystore_filename is None:
             keystore_filename = self.config['settings']['icon2'].get('GOLOOP_KEY_STORE', 'keystore.json').split('/')[-1]
 
-        if not is_file(f"{self.config_dir}/{keystore_filename}") or self.config['settings']['env'].get('KEY_RESET', False):
+        if is_file(f"{self.config_dir}/{keystore_filename}") is False or self.config['settings']['env'].get('KEY_RESET', False) is True:
             wallet = WalletLoader(f"{self.config_dir}/{keystore_filename}", keysecret_passwd, keysecret_filename)
             wallet.create_wallet()
             write_file(f'{keysecret_filename}', keysecret_passwd)
@@ -56,7 +56,7 @@ class ConfigureSetter:
             self.cfg.logger.info(f"Already keystore file - {keystore_filename}")
 
     def create_genesis_json(self, ):
-        self.cfg.logger.info(f"Start create_genesis_json()")
+        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         rs = write_json(
             f"{self.config['settings'].get('genesis_json', '/goloop/config/genesis.json')}",
             self.config['settings'].get('genesis')
@@ -64,7 +64,7 @@ class ConfigureSetter:
         self.cfg.logger.info(f"{rs}")
 
     def create_gs_zip(self, ):
-        self.cfg.logger.info(f"Start create_gs_zip()")
+        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         genesis_file = f'{self.config["settings"]["env"]["CONFIG_URL"]}/{self.config["settings"]["env"]["SERVICE"]}/icon_genesis.zip'
         res = requests.get(genesis_file)
         if res.status_code == 200:
@@ -78,7 +78,7 @@ class ConfigureSetter:
             self.cfg.logger.error(f"API status code is {res.status_code}. ({genesis_file})")
 
     def create_icon_config(self, ):
-        self.cfg.logger.info(f"Start create_icon_config()")
+        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         if self.config['settings'].get('iiss'):
             rs = write_json(
                 f"{self.config['settings'].get('iiss_json', f'/goloop/icon_config.json')}",
@@ -87,7 +87,7 @@ class ConfigureSetter:
             self.cfg.logger.info(f"{rs}")
 
     def create_yaml_file(self, file_name=None):
-        self.cfg.logger.info(f"Start create_yaml_file()")
+        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         if file_name is None:
             file_name = f"{os.path.join(self.base_dir, self.config['settings']['env'].get('CONFIG_LOCAL_FILE', 'configure.yml'))}"
         rs = write_yaml(
@@ -98,7 +98,7 @@ class ConfigureSetter:
 
     def create_env_file(self, file_name: str='.env'):
         file_name = f"{os.path.join(self.base_dir, file_name)}"
-        self.cfg.logger.info(f"Start create_env_file()")
+        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         with open(file_name, 'w') as env:
             for key, val in self.config['settings']['env'].items():
                 if key == 'COMPOSE_ENV':
@@ -108,14 +108,14 @@ class ConfigureSetter:
                 env.write(f"{key}={val}\n")
 
     def create_db(self, ):
-        self.cfg.logger.info(f"Start create_db()")
+        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         time.sleep(self.config['settings']['mig'].get('MIG_REST_TIME', 5))
         self.cfg.logger.info(f"[RESTORE] "
                              f"FASTEST_START = {self.config['settings']['env'].get('FASTEST_START')}, "
                              f"MIG_DB = {self.config['settings']['mig'].get('MIG_DB')}"
                              )
-        if self.config['settings']['env'].get('FASTEST_START'):
-            if self.config['settings']['mig'].get('MIG_DB'):
+        if self.config['settings']['env'].get('FASTEST_START') is True:
+            if self.config['settings']['mig'].get('MIG_DB') is True:
                 self.cfg.logger.info(f"[RESTORE] DOWNLOAD from Migration Stage2 DB")
             else:
                 self.cfg.logger.info(f"[RESTORE] DOWNLOAD from ICON2 DB")

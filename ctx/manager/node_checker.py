@@ -126,10 +126,9 @@ class NodeChecker:
                                        )
                     _block_stack = 0
                     _block[0] = _block[-1]
-            if _peer_stack == _stack_limit or _block_stack == _stack_limit:
+            if _peer_stack >= _stack_limit or _block_stack >= _stack_limit:
                 self.cfg.logger.error("Node stack_limit over.")
-                run_execute("/etc/services.d/02-manager/shutdown")
-                # sys.exit(127)
+                sys.exit(127)
             await asyncio.sleep(self.config['settings']['env'].get('CHECK_TIMEOUT', _check_interval))
 
     def run(self, ):
