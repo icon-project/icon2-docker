@@ -65,7 +65,7 @@ class NTPDaemon:
         rs, _ = self.ntp_run(cmd)
         rs_dict = dict()
         for i, r in enumerate(rs):
-            for ntp in self.config['settings']['env'].get('NTP_SERVERS').split(","):
+            for ntp in ntp_servers.split(","):
                 if ntp in r:
                     if len(rs) == i+1:
                         break
