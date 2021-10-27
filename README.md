@@ -62,7 +62,7 @@ services:
 Start up
 
 ```yaml
-$ docker-compose up -d
+$ docker-compose pull && docker-compose up -d
 ```
 
 
