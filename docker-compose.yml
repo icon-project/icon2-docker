@@ -1,0 +1,21 @@
+version: '3'
+services:
+  icon2-node:
+    image: 'iconloop/icon2-node'
+    restart: "on-failure"
+    container_name: "icon2-node"
+    network_mode: "host"
+    stdin_open: true
+    environment:
+      SERVICE: "MainNet"
+      IS_AUTOGEN_CERT: "true"
+      FASTEST_START: "true"
+
+    cap_add:
+      - SYS_TIME
+
+    volumes:
+      - ./config:/goloop/config
+      - ./data:/goloop/data
+      - ./logs:/goloop/logs
+

@@ -1,0 +1,3 @@
+[submodule "goloop"]
+	path = goloop
+	url = https://github.com/icon-project/goloop

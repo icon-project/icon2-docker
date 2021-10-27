@@ -1,0 +1,19 @@
+dependencies {
+    implementation project(':api')
+}
+
+sourceSets {
+    main.java.srcDirs = [
+        'collection/src',
+        'crowdsale/src',
+        'governance/src',
+        'multisig/src',
+        'sampletoken/src',
+        'testcases/src',
+        'tbcinterpreter/src',
+    ]
+}
+
+compileJava {
+    options.compilerArgs += ['-parameters']
+}

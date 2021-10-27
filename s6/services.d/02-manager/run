@@ -1,0 +1,17 @@
+#!/usr/bin/with-contenv bash
+
+## TEST start
+
+echo "ICON2 Manager"
+
+source /goloop/.env
+
+while [ ! -S ${BASE_DIR}/data/cli.sock ];
+do
+  echo ">>>> Wait for create ${BASE_DIR}/data/cli.sock file.. <<<<<" >> ${BASE_DIR}/logs/booting.log
+	sleep 1
+done
+
+echo ">>>> Checked ${BASE_DIR}/data/cli.sock file! <<<<<" >> ${BASE_DIR}/logs/booting.log
+
+python3 /ctx/main.py

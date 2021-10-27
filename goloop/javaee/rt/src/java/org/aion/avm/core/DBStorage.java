@@ -1,0 +1,115 @@
+/*
+ * Copyright 2019 ICON Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.aion.avm.core;
+
+import i.IDBStorage;
+import i.IInstrumentation;
+
+import java.math.BigInteger;
+
+public class DBStorage implements IDBStorage {
+    private final IExternalState ctx;
+
+    public DBStorage(IExternalState ctx) {
+        this.ctx = ctx;
+    }
+
+    public void setArrayLength(byte[] key, int l) {
+        byte[] v;
+        if (l == 0) {
+            v = null;
+        } else {
+            v = BigInteger.valueOf(l).toByteArray();
+        }
+        setBytes(key, v);
+    }
+
+    public int getArrayLength(byte[] key) {
+        var bs = getBytes(key);
+        if (bs == null)
+            return 0;
+        return new BigInteger(bs).intValue();
+    }
+
+    private void charge(int cost) {
+        IInstrumentation.attachedThreadInstrumentation.get().chargeEnergy(cost);
+    }
+
+    private void chargeImmediately(int cost) {
+        IInstrumentation.attachedThreadInstrumentation.get().chargeEnergyImmediately(cost);
+    }
+
+    private boolean tryCharge(int cost) {
+        return IInstrumentation.attachedThreadInstrumentation.get().tryChargeEnergy(cost);
+    }
+
+    public void setBytes(byte[] k, byte[] v) {
+        if (ctx.isReadOnly()) {
+            throw new IllegalStateException();
+        }
+        var stepCost = ctx.getStepCost();
+        if (v == null) {
+            var r = stepCost.replaceBase() * stepCost.replace();
+            if (tryCharge(r)) {
+                ctx.putStorage(k, null, prevSize -> {
+                    if (prevSize >= 0) {
+                        chargeImmediately(-r + stepCost.defaultDelete());
+                    }
+                });
+            } else {
+                var prev = ctx.getStorage(k);
+                if (prev != null) {
+                    chargeImmediately(stepCost.defaultDelete());
+                } else {
+                    chargeImmediately(r);
+                }
+                ctx.putStorage(k, null, null);
+            }
+        } else {
+            var r = Math.max(stepCost.replaceBase(),
+                    v.length) * stepCost.replace();
+            if (tryCharge(r + stepCost.defaultSet())) {
+                ctx.putStorage(k, v, prevSize -> {
+                    if (prevSize >= 0) {
+                        chargeImmediately(-stepCost.defaultSet());
+                    }
+                });
+            } else {
+                var prev = ctx.getStorage(k);
+                if (prev != null) {
+                    chargeImmediately(r);
+                } else {
+                    chargeImmediately(r + stepCost.defaultSet());
+                }
+                ctx.putStorage(k, v, null);
+            }
+        }
+    }
+
+    public byte[] getBytes(byte[] key) {
+        var value = ctx.getStorage(key);
+        var stepCost = ctx.getStepCost();
+        int len = 0;
+        if (value != null)
+            len = value.length;
+        charge(stepCost.defaultGet() + len * stepCost.get());
+        return value;
+    }
+
+    public void flush() {
+    }
+}

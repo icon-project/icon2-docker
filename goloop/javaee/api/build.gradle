@@ -1,0 +1,11 @@
+apply plugin: 'java-library'
+
+task scoreJavadoc(type: Javadoc) {
+    source = sourceSets.main.allJava
+    classpath = sourceSets.main.output
+    destinationDir = file("${buildDir}/javadoc")
+}
+
+assemble {
+    dependsOn scoreJavadoc
+}

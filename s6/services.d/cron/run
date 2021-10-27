@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv bash
+
+source /goloop/.env
+
+export LOGFILE=${LOGFILE}
+export ERROR_LOGFILE=${ERROR_LOGFILE}
+export LOGROTATE_DATE=${LOGROTATE_DATE}
+export LOGROTATE_SIZE=${LOGROTATE_SIZE}
+
+gomplate -f /ctx/tmpl/logrotate-goloop.tmpl -o /etc/logrotate.d/goloop
+echo -e "0\t0\t*\t*\t*\tlogrotate -f /etc/logrotate.d/goloop" > /etc/crontabs/root
+
+exec crond -f -L /var/log/cron.log
