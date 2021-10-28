@@ -19,7 +19,7 @@ class InitManager:
         for key, value in self.cfg.compose_env.items():
             self.cfg.logger.info(f"[INIT_CONFIG] {key} = {value} ({type(value).__name__})")
 
-        if self.cfg.compose_env.get('LOCAL_TEST'):
+        if self.cfg.compose_env.get('LOCAL_TEST') is True:
             ip_type = "LOCAL_TEST"
         else:
             ip_type = "PUBLIC"
@@ -32,6 +32,12 @@ class InitManager:
                     if key == 'KEY_PASSWORD' and len(value):
                         value = '*' * len(str(value))
                     self.cfg.logger.info(f"[DOCKER_ENV] {key} = {value} ({type(value).__name__})")
+
+        settings = self.cfg.config['settings']['icon2']
+        if settings:
+            for key, value in settings.items():
+                if value is not None:
+                    self.cfg.logger.info(f"[ICON2] {key} = {value} ({type(value).__name__})")
 
         self.cs.create_yaml_file()
         self.cs.create_env_file()

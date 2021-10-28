@@ -94,20 +94,14 @@ class Configure:
                 if self.config.get('settings') and self.config['settings'].get('env'):
                     for compose_env in self.config['settings']['env'].get('COMPOSE_ENV', {}).keys():
                         if os.getenv(compose_env):
-                            if os.getenv(compose_env).lower() in ['true', 'false']:
-                                if os.getenv(compose_env).lower() == 'true':
-                                    self.config['settings']['env'][compose_env] = True
-                                else:
-                                    self.config['settings']['env'][compose_env] = False
-                            else:
-                                self.config['settings']['env'][compose_env] = os.getenv(compose_env)
+                            self.config['settings']['env'][compose_env] = self.get_os_env(compose_env)
                         else:
                             pass
                     self.config['settings']['env'].update(self.compose_env)
                     self.config['settings']['icon2'] = dict()
                     for icon2_env in self.config['reference'].get('icon2_default').keys():
                         if self.config['settings']['icon2'].get(icon2_env, None) is None:
-                            self.config['settings']['icon2'][icon2_env] = os.getenv(icon2_env)
+                            self.config['settings']['icon2'][icon2_env] = self.get_os_env(icon2_env)
                     self.config['settings']['icon2']['GOLOOP_BACKUP_DIR'] = f"{os.getenv('BASE_DIR')}/data/backup"
                     self.config['settings']['icon2']['GOLOOP_EE_SOCKET'] = f"{os.getenv('BASE_DIR')}/data/ee.sock"
                     self.config['settings']['icon2']['GOLOOP_NODE_SOCK'] = f"{os.getenv('BASE_DIR')}/data/cli.sock"
@@ -136,8 +130,18 @@ class Configure:
             self.config['settings']['mig'] = yaml.load(res.text, Loader=yaml.FullLoader)
         for mig_key in self.config['settings']['mig'].keys():
             if os.getenv(mig_key):
-                self.config['settings']['mig'][mig_key] = os.getenv(mig_key)
+                self.config['settings']['mig'][mig_key] = self.get_os_env(mig_key)
         # self.logger.info(f"Initializing Configure\n{json.dumps(self.config['settings'], indent=4)}")
+
+    def get_os_env(self, env_key):
+        if os.getenv(env_key) and os.getenv(env_key).lower() in ['true', 'false']:
+            if os.getenv(env_key).lower() == 'true':
+                return True
+            else:
+                return False
+        else:
+            return os.getenv(env_key, None)
+
 
     def config_from_file(self, ):
         try:
