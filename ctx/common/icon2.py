@@ -173,6 +173,10 @@ class WalletLoader:
                 if keysecret != self.password:
                     # self.print_logging(f"keysecret({keysecret}) and password({self.password}) are different", "red")
                     self.print_logging(f"keysecret and password are different", "red")
+            keystore = output.open_file(self.filename)
+            if len(keystore) !=0:
+                if u"\ufeff" in keystore:
+                    self.print_logging(f"[Warning] Found UTF-8 BOM in the Keystore file", "red")
             self.wallet = KeyWallet.load(self.filename, self.password)
         else:
             self.wallet = self.from_prikey_file()

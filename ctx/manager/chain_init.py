@@ -52,10 +52,9 @@ class ChainInit:
     def starter(self, ):
         time.sleep(self.config['settings']['mig'].get('MIG_REST_TIME', 5))
 
-        if self.config['settings']['env'].get('FASTEST_START'):
-
+        if self.config['settings']['env'].get('FASTEST_START') is True:
             self.cfg.logger.info(f"Control Chain: START {self.ctl.get_state()}, FASTEST_START={self.config['settings']['env']['FASTEST_START']}")
-            if self.config['settings']['mig'].get('MIG_COMPLETED') is False and self.config['settings']['mig'].get('MIGRATION_START'):
+            if self.config['settings']['mig'].get('MIG_COMPLETED') is False and self.config['settings']['mig'].get('MIGRATION_START') is True:
                 self.cfg.logger.info(f"Migration DB Stage2")
                 self.cfg.logger.info(f"Control Chain: START {self.ctl.get_state()}")
                 payload = {
@@ -76,7 +75,7 @@ class ChainInit:
             if isinstance(res, dict) and res.get('cid', None) is None:
                 self.cfg.logger.info(f"Control Chain: JOIN, AUTO_SEEDS={self.config['settings']['env'].get('AUTO_SEEDS')} "
                                      f"SEEDS={self.config['settings']['env'].get('SEEDS')}")
-                if str2bool(self.config['settings']['env'].get('AUTO_SEEDS')) and not self.config['settings']['env'].get('SEEDS'):
+                if self.config['settings']['env'].get('AUTO_SEEDS') is True and not self.config['settings']['env'].get('SEEDS'):
                     self.get_seeds()
                 res = self.ctl.join(
                     seedAddress=self.config['settings']['env'].get('SEEDS').split(','),
