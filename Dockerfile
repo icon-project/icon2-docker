@@ -10,11 +10,12 @@ ENV IS_DOCKER=true \
     GOLOOP_RPC_ADDR=':9000' \
     GOLOOP_RPC_DUMP='true' \
     GOLOOP_CONSOLE_LEVEL='debug' \
-    GOLOOP_LOG_LEVEL='debug'
+    GOLOOP_LOG_LEVEL='debug' \
+    BASE_DIR='/goloop'
 
 
 RUN apk update && \
-    apk add --no-cache bash vim tree nmap git ncurses curl gomplate logrotate aria2 && \
+    apk add --no-cache bash vim tree nmap git ncurses curl gomplate logrotate aria2 jq&& \
     python -m pip install --upgrade pip
 
 ADD https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer /tmp/
