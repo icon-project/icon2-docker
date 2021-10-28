@@ -3,11 +3,10 @@
 {{ .Env.LOGFILE }} { {{ else }}/goloop/logs/goloop.log { {{ end }}
     daily
     {{ if ne .Env.LOGROTATE_DATE "" }}rotate {{ .Env.LOGROTATE_DATE }}{{ else }}rotate 14{{ end }}
-    {{ if ne .Env.LOGROTATE_SIZE "" }}size {{ .Env.LOGROTATE_SIZE }}{{ else }}size 1G{{ end }}
     compress
     delaycompress
     dateext
-    dateformat -%Y%m%d%H%M%S
+    dateformat .%Y-%m-%d
     missingok
     copytruncate
 }
