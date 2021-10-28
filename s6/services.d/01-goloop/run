@@ -2,21 +2,25 @@
 
 source /goloop/.env
 
-BASE_DIR=${BASE_DIR:-"/goloop"}
-GOLOOP_CONFIG=${GOLOOP_CONFIG:-"${BASE_DIR}/config/server.json"}
+export $(grep ^GOLOOP /goloop/.env)
 
-if [[ "$GOLOOP_CONFIG" != "" && ! -f "$GOLOOP_CONFIG" ]]; then
+export BASE_DIR=${BASE_DIR:-"/goloop"}
+export GOLOOP_CONFIG=${GOLOOP_CONFIG:-"${BASE_DIR}/config/server.json"}
+
+
+if [[ "${GOLOOP_CONFIG}" != "" && ! -f "${GOLOOP_CONFIG}" ]]; then
     UNSET="GOLOOP_CONFIG"
-    CMD="goloop server save $GOLOOP_CONFIG"
-    if [[ "$GOLOOP_KEY_SECRET" != "" && ! -f "$GOLOOP_KEY_SECRET" ]]; then
-        mkdir -p $(dirname $GOLOOP_KEY_SECRET)
+    CMD="goloop server save ${GOLOOP_CONFIG}"
+    if [[ "${GOLOOP_KEY_SECRET}" != "" && ! -f "${GOLOOP_KEY_SECRET}" ]]; then
+        mkdir -p $(dirname ${GOLOOP_KEY_SECRET})
         echo -n ${KEY_PASSWORD} > ${GOLOOP_KEY_SECRET}
     fi
-    if [[ "$GOLOOP_KEY_STORE" != "" && ! -f "$GOLOOP_KEY_STORE" ]]; then
-        UNSET="$UNSET GOLOOP_KEY_STORE"
-        CMD="$CMD --save_key_store=$GOLOOP_KEY_STORE"
+    if [[ "${GOLOOP_KEY_STORE}" != "" && ! -f "${GOLOOP_KEY_STORE}" ]]; then
+        UNSET="${UNSET} GOLOOP_KEY_STORE"
+        CMD="${CMD} --save_key_store=${GOLOOP_KEY_STORE}"
     fi
-    bash -c "unset $UNSET ; $CMD"
+    echo "generate ${GOLOOP_CONFIG} " >> ${LOGFILE}
+    bash -c "unset $UNSET ; $CMD 2>&1 | tee -a ${LOGFILE}"
 fi
 
 echo ">>>> Starting goloop server (${LOG_OUTPUT_TYPE}, ${BASE_DIR}, ${GOLOOP_CONFIG}) <<<<<" >> ${BASE_DIR}/logs/booting.log

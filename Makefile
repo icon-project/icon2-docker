@@ -197,10 +197,9 @@ tag_latest: print_version
 
 
 bash: make_debug_mode print_version
-		docker run  $(shell cat DEBUG_ARGS) -p 9000:9000 -p 7100:7100 -it -v $(PWD)/config:/goloop/config \
-		-v $(PWD)/s6:/s6_int \
+	docker run  $(shell cat DEBUG_ARGS) -p 9000:9000 -p 7100:7100 -it -v $(PWD)/config:/goloop/config -v ${PWD}/s6:/s6-int \
 		-v $(PWD)/logs:/goloop/logs -v $(PWD)/ctx:/ctx -v $(PWD)/data:/goloop/data -e VERSION=$(TAGNAME) -v $(PWD)/src:/src --entrypoint /bin/bash \
-		--name $(NAME) --network host --rm $(REPO_HUB)/$(NAME):$(TAGNAME)
+		--name $(NAME) --cap-add SYS_TIME --network host --rm $(REPO_HUB)/$(NAME):$(TAGNAME)
 
 
 f_bash: make_debug_mode print_version
