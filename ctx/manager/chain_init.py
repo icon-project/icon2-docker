@@ -78,7 +78,7 @@ class ChainInit:
                 if self.config['settings']['env'].get('AUTO_SEEDS') is True and not self.config['settings']['env'].get('SEEDS'):
                     self.get_seeds()
                 res = self.ctl.join(
-                    seedAddress=self.config['settings']['env'].get('SEEDS').split(','),
+                    seedAddress=self.config['settings']['env'].get('SEEDS', '').split(','),
                     role=self.config['settings']['env'].get('ROLE', 0),
                     gs_file=self.config['settings'].get('genesis_storage', '/goloop/config/icon_genesis.zip')
                 )
