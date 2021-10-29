@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv bash
 
-source /goloop/.env
+#source /goloop/.env
 
 export $(grep ^GOLOOP /goloop/.env)
 
@@ -11,14 +11,14 @@ export GOLOOP_CONFIG=${GOLOOP_CONFIG:-"${BASE_DIR}/config/server.json"}
 if [[ "${GOLOOP_CONFIG}" != "" && ! -f "${GOLOOP_CONFIG}" ]]; then
     UNSET="GOLOOP_CONFIG"
     CMD="goloop server save ${GOLOOP_CONFIG}"
-    if [[ "${GOLOOP_KEY_SECRET}" != "" && ! -f "${GOLOOP_KEY_SECRET}" ]]; then
-        mkdir -p $(dirname ${GOLOOP_KEY_SECRET})
-        echo -n ${KEY_PASSWORD} > ${GOLOOP_KEY_SECRET}
-    fi
-    if [[ "${GOLOOP_KEY_STORE}" != "" && ! -f "${GOLOOP_KEY_STORE}" ]]; then
-        UNSET="${UNSET} GOLOOP_KEY_STORE"
-        CMD="${CMD} --save_key_store=${GOLOOP_KEY_STORE}"
-    fi
+#    if [[ "${GOLOOP_KEY_SECRET}" != "" && ! -f "${GOLOOP_KEY_SECRET}" ]]; then
+#        mkdir -p $(dirname ${GOLOOP_KEY_SECRET})
+#        echo -n ${KEY_PASSWORD} > ${GOLOOP_KEY_SECRET}
+#    fi
+#    if [[ "${GOLOOP_KEY_STORE}" != "" && ! -f "${GOLOOP_KEY_STORE}" ]]; then
+#        UNSET="${UNSET} GOLOOP_KEY_STORE"
+#        CMD="${CMD} --save_key_store=${GOLOOP_KEY_STORE}"
+#    fi
     echo "generate ${GOLOOP_CONFIG} " >> ${LOGFILE}
     bash -c "unset $UNSET ; $CMD 2>&1 | tee -a ${LOGFILE}"
 fi
