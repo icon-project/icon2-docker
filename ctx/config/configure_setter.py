@@ -109,9 +109,9 @@ class ConfigureSetter:
             for key, val in self.config['settings']['env'].items():
                 if key == 'COMPOSE_ENV':
                     continue
-                env.write(f"{key}={val}\n")
+                env.write(f"{key}=\"{val}\"\n")
             for key, val in self.config['settings']['icon2'].items():
-                env.write(f"{key}={val}\n")
+                env.write(f"{key}=\"{val}\"\n")
 
     def create_db(self, ):
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
