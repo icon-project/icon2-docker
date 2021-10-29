@@ -174,10 +174,16 @@ class WalletLoader:
                     # self.print_logging(f"keysecret({keysecret}) and password({self.password}) are different", "red")
                     self.print_logging(f"keysecret and password are different", "red")
             keystore = output.open_file(self.filename)
-            if len(keystore) !=0:
-                if u"\ufeff" in keystore:
-                    self.print_logging(f"[Warning] Found UTF-8 BOM in the Keystore file", "red")
             self.wallet = KeyWallet.load(self.filename, self.password)
+            if len(keystore) != 0:
+                if u"\ufeff" in keystore:
+                    self.print_logging(f"[ERROR] Found UTF-8 BOM in the your Keystore file", "red")
+                    file_info = output.get_file_path(self.filename)
+                    key_filename = file_info.get("file")
+                    if not output.is_file(f"{self.filename}_without_bom"):
+                        self.wallet.store(f"{self.filename}_without_bom", self.password)
+                    raise Exception(f"There is a problem with the keystore file, So ICON2 node cannot start.\n"
+                                    f"You should use the converted \"{key_filename}_without_bom\" file.")
         else:
             self.wallet = self.from_prikey_file()
 
