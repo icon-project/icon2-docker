@@ -12,6 +12,8 @@ from datetime import datetime
 # except:
 from common.logger import CustomLog as CL
 from common import converter
+from termcolor import cprint
+import sys
 
 
 def get_local_ip():
@@ -49,9 +51,12 @@ class Configure:
         self.logger = self.get_logger('booting.log')
         self.get_config(use_file)
 
-        # self.logger.info(f"StartingConfig\n{json.dumps(self.compose_env, indent=4)}")
-            # self.loggers['booting'].log.info(f"[INIT_CONFIG] {key} = {value} ({type(value).__name__})")
-        # self.logger.info(f"Service = {self.compose_env.get('SERVICE')}")
+        sys.excepthook = self.exception_handler
+
+    def exception_handler(self, exception_type, exception, traceback):
+        exception_string = f"[Exception] {exception_type.__name__}: {exception}, {traceback.tb_frame}"
+        cprint(f"{exception_string}", "red")
+        self.logger.error(f"{exception_string}")
 
     def get_logger(self, log_file="booting.log"):
         return self.loggers.get(log_file, self.loggers.get('booting.log')).log
@@ -120,7 +125,6 @@ class Configure:
                         self.config['settings']['icon2']['GOLOOP_P2P'] = f"{public_ip}:{port}"
                         # self.logger.info(f"[PUBLIC] GOLOOP_P2P = \"{public_ip}:{port}\"")
                         self.compose_env.pop('LOCAL_TEST')
-                    print(self.config['settings']['icon2'])
                 else:
                     self.logger.error('No env.')
             else:

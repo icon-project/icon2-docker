@@ -21,7 +21,7 @@ from config.configure import Configure as CFG
 
 from .file_indexing import FileIndexer
 
-sys.excepthook = output.exception_handler
+# sys.excepthook = output.exception_handler
 
 ## SSL Warnning
 base.disable_ssl_warnings()

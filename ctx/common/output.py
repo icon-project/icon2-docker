@@ -215,14 +215,14 @@ def slack_wh_send(self, text):
     requests.post(self.config['settings']['env']['SLACK_WH_URL'], json=payload, verify=False)
 
 
-def exception_handler(exception_type, exception, traceback):
-    # import inspect
-    # import traceback as traceback_module
-    # from devtools import debug
-    # debug(traceback_module.extract_stack()[:-3])
-    exception_string = f"[Exception] {exception_type.__name__}: {exception}, {traceback.tb_frame}"
-    cprint(f"{exception_string}", "red")
-    cfg.logger.error(f"{exception_string}")
+# def exception_handler(exception_type, exception, traceback):
+#     # import inspect
+#     # import traceback as traceback_module
+#     # from devtools import debug
+#     # debug(traceback_module.extract_stack()[:-3])
+#     exception_string = f"[Exception] {exception_type.__name__}: {exception}, {traceback.tb_frame}"
+#     cprint(f"{exception_string}", "red")
+#     cfg.logger.error(f"{exception_string}")
 
 
 def send_slack(url, msg_text, title=None, send_user_name="CtxBot", msg_level='info'):
