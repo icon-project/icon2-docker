@@ -2,7 +2,7 @@
 
 #source /goloop/.env
 
-export $(grep ^GOLOOP /goloop/.env)
+export $(cat /goloop/.env)
 
 export BASE_DIR=${BASE_DIR:-"/goloop"}
 export GOLOOP_CONFIG=${GOLOOP_CONFIG:-"${BASE_DIR}/config/server.json"}

@@ -1,5 +1,5 @@
-{{ if and (ne .Env.LOGFILE "") (ne .Env.ERROR_LOGFILE "" ) }}
-{{ .Env.LOGFILE }} {{ .Env.ERROR_LOGFILE }} { {{ else if ne .Env.LOGFILE "" }}
+{{ if (ne .Env.LOGFILE "") }}
+{{ .Env.LOGFILE }} { {{ else if ne .Env.LOGFILE "" }}
 {{ .Env.LOGFILE }} { {{ else }}/goloop/logs/goloop.log { {{ end }}
     daily
     {{ if ne .Env.LOGROTATE_DATE "" }}rotate {{ .Env.LOGROTATE_DATE }}{{ else }}rotate 14{{ end }}
