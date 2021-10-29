@@ -105,6 +105,8 @@ class Configure:
                     self.config['settings']['icon2']['GOLOOP_BACKUP_DIR'] = f"{os.getenv('BASE_DIR')}/data/backup"
                     self.config['settings']['icon2']['GOLOOP_EE_SOCKET'] = f"{os.getenv('BASE_DIR')}/data/ee.sock"
                     self.config['settings']['icon2']['GOLOOP_NODE_SOCK'] = f"{os.getenv('BASE_DIR')}/data/cli.sock"
+                    key_store_filename = self.config['settings']['env'].get("KEY_STORE_FILENAME", 'keystore.json')
+                    self.config['settings']['icon2']['GOLOOP_KEY_STORE'] = f"{os.getenv('BASE_DIR')}/config/{key_store_filename}"
                     if self.config['settings']['env'].get('GOLOOP_P2P'):
                         self.config['settings']['icon2']['GOLOOP_P2P'] = self.config['settings']['env']['GOLOOP_P2P']
                     elif self.compose_env['LOCAL_TEST'] is True:
