@@ -109,10 +109,12 @@ class ConfigureSetter:
             for key, val in self.config['settings']['env'].items():
                 if key in ["COMPOSE_ENV", "KEY_PASSWORD", "KEY_SECRET"]:
                     continue
-                env.write(f"{key}={val}\n")
+                if val is not None:
+                    env.write(f"{key}={val}\n")
 
             for key, val in self.config['settings']['icon2'].items():
-                env.write(f"{key}={val}\n")
+                if val is not None:
+                    env.write(f"{key}={val}\n")
 
     def create_db(self, ):
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")

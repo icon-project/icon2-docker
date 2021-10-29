@@ -1,6 +1,6 @@
 #!/usr/bin/with-contenv bash
 
-source /goloop/.env
+export $(grep ^GOLOOP /goloop/.env)
 
 if [[ -f $GOLOOP_NODE_SOCK ]]; then
     rm -f $GOLOOP_NODE_SOCK

@@ -4,7 +4,7 @@
 
 echo "ICON2 Manager"
 
-source /goloop/.env
+export BASE_DIR=${BASE_DIR:-"/goloop"}
 
 while [ ! -S ${BASE_DIR}/data/cli.sock ];
 do
