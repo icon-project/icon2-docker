@@ -107,18 +107,11 @@ class ConfigureSetter:
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         with open(file_name, 'w') as env:
             for key, val in self.config['settings']['env'].items():
-                if key == 'COMPOSE_ENV':
+                if key in ["COMPOSE_ENV", "KEY_PASSWORD", "KEY_SECRET"]:
                     continue
-                # if val:
-                #     if isinstance(val, str):
-                #         env.write(f"{key}=\"{val}\"\n")
-                #     else:
                 env.write(f"{key}={val}\n")
+
             for key, val in self.config['settings']['icon2'].items():
-                # if val:
-                #     if isinstance(val, str):
-                #         env.write(f"{key}=\"{val}\"\n")
-                #     else:
                 env.write(f"{key}={val}\n")
 
     def create_db(self, ):
