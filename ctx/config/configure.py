@@ -41,6 +41,8 @@ def singleton(class_):
 @singleton
 class Configure:
     def __init__(self, use_file=False):
+        self.about = {}
+        self.get_version()
         self.config = dict()
         self.compose_env = self._compose_env()
         self.log_dir = f"{self.compose_env['BASE_DIR']}/logs"
@@ -50,8 +52,12 @@ class Configure:
         self.loggers = {'booting.log': self.init_logger('booting.log', log_level='debug', log_stdout=True)}
         self.logger = self.get_logger('booting.log')
         self.get_config(use_file)
-
         sys.excepthook = self.exception_handler
+
+    def get_version(self):
+        for version_info in ["VERSION", "BUILD_DATE", "VCS_REF"]:
+            self.about[version_info] = os.getenv(version_info)
+        return self.about
 
     def exception_handler(self, exception_type, exception, traceback):
         exception_string = f"[Exception] {exception_type.__name__}: {exception}, {traceback.tb_frame}"
@@ -147,7 +153,6 @@ class Configure:
                 return False
         else:
             return os.getenv(env_key, None)
-
 
     def config_from_file(self, ):
         try:

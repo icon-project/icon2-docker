@@ -21,7 +21,6 @@ endif
 TAGNAME = $(VERSION)
 VCS_REF = $(strip $(shell git rev-parse --short HEAD))
 BUILD_DATE = $(strip $(shell date -u +"%Y-%m-%dT%H:%M:%S%Z"))
-
 GIT_DIRTY  = $(shell cd ${GOLOOP_PATH}; git diff --shortstat 2> /dev/null | tail -n1 )
 
 ifeq ($(IS_LOCAL), true)
@@ -165,6 +164,10 @@ build: make_build_args
 			$(shell cat BUILD_ARGS) \
 			-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
 		docker rmi -f goloop-icon
+
+
+show_labels: make_build_args
+		docker $(REPO_HUB)/$(NAME):$(TAGNAME) | jq .[].Config.Labels
 
 build_ci:
 		cd $(GOLOOP_PATH) && $(MAKE) goloop-icon-image
