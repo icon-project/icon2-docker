@@ -4,6 +4,7 @@
 
 import os
 import requests
+import shutil
 
 from iconsdk.wallet.wallet import KeyWallet
 from iconsdk.wallet import wallet
@@ -177,13 +178,13 @@ class WalletLoader:
             self.wallet = KeyWallet.load(self.filename, self.password)
             if len(keystore) != 0:
                 if u"\ufeff" in keystore:
-                    self.print_logging(f"[ERROR] Found UTF-8 BOM in the your Keystore file", "red")
-                    file_info = output.get_file_path(self.filename)
-                    key_filename = file_info.get("file")
-                    if not output.is_file(f"{self.filename}_without_bom"):
-                        self.wallet.store(f"{self.filename}_without_bom", self.password)
-                    raise Exception(f"There is a problem with the keystore file, So ICON2 node cannot start.\n"
-                                    f"You should use the converted \"{key_filename}_without_bom\" file.")
+                    self.print_logging(f"[WARN] Found UTF-8 BOM in the your Keystore file. It will be converted to standard JSON.", "white")
+                    backup_file = shutil.move(self.filename, f"{self.filename}_backup")
+                    self.print_logging(f"[WARN] Backup original file - {backup_file}", "white")
+                    if backup_file and output.is_file(f"{self.filename}_backup"):
+                        self.wallet.store(f"{self.filename}", self.password)
+                    if output.is_file(self.filename):
+                        self.print_logging(f"[OK] Successfully convert - {self.filename}", "white")
         else:
             self.wallet = self.from_prikey_file()
 

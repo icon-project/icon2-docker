@@ -15,6 +15,7 @@ class InitManager:
         self.cs = CS() # ConfigureSetter
 
     def run(self, ):
+        self.print_banner()
         self.cfg.logger.info(f"[INIT_CONFIG] Initializing Configuration")
         for key, value in self.cfg.compose_env.items():
             self.cfg.logger.info(f"[INIT_CONFIG] {key} = {value} ({type(value).__name__})")
@@ -49,6 +50,15 @@ class InitManager:
         self.cs.create_icon_config()
         self.cs.create_db()
         self.cfg.logger.info("--- Finish initializing ---")
+
+    def print_banner(self):
+        v_info = self.cfg.get_version()
+        self.cfg.logger.info(f" ██████╗████████╗██╗  ██╗")
+        self.cfg.logger.info(f"██╔════╝╚══██╔══╝╚██╗██╔╝")
+        self.cfg.logger.info(f"██║        ██║    ╚███╔╝  Goloop Version: {v_info.get('VERSION')}")
+        self.cfg.logger.info(f"██║        ██║    ██╔██╗  CTX Version:    {v_info.get('VCS_REF')}")
+        self.cfg.logger.info(f"╚██████╗   ██║   ██╔╝ ██╗ Build Date:     {v_info.get('BUILD_DATE')}")
+        self.cfg.logger.info(f" ╚═════╝   ╚═╝   ╚═╝  ╚═╝")
 
 
 if __name__ == '__main__':
