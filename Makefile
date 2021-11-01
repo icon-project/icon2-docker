@@ -107,7 +107,7 @@ make_build_args:
 			 $(if  \
 				 $(filter-out environment% default automatic, $(origin $V) ), \
 				 	 $($V=$($V)) \
-				 $(if $(filter-out "SHELL" "%_COLOR" "%_STRING" "MAKE%" "colorecho" ".DEFAULT_GOAL" "CURDIR" "TEST_FILES" "DOCKER_BUILD_OPTION", "$V" ),  \
+				 $(if $(filter-out "SHELL" "%_COLOR" "%_STRING" "MAKE%" "colorecho" ".DEFAULT_GOAL" "CURDIR" "TEST_FILES" "DOCKER_BUILD_OPTION" "GIT_DIRTY", "$V" ),  \
 					$(shell echo $(ECHO_OPTION) '$(OK_COLOR)  $V = $(WARN_COLOR) $($V) $(NO_COLOR) ' >&2;) \
 				 	$(shell echo "--build-arg $V=$($V)  " >> BUILD_ARGS)\
 				  )\
@@ -170,9 +170,9 @@ build: make_build_args
 show_labels: make_build_args
 		docker $(REPO_HUB)/$(NAME):$(TAGNAME) | jq .[].Config.Labels
 
-build_ci:
+build_ci: make_build_args
 		cd $(GOLOOP_PATH) && $(MAKE) goloop-icon-image
-		docker build --build-arg BASE_IMAGE=$(BASE_IMAGE) --build-arg IS_NTP_BUILD=$(IS_NTP_BUILD) --build-arg NTP_VERSION=$(NTP_VERSION) -f Dockerfile \
+		docker build $(shell cat BUILD_ARGS) -f Dockerfile \
 		-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
 		docker rmi -f goloop-icon
 
