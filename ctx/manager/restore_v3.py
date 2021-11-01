@@ -104,6 +104,7 @@ class Restore:
                                False일 경우 동일 파일 비교 후 다를 경우 삭제 |  사용자 입력(docker 변수로 ) 없을 경우 default 사용  : false
         """
         self.cfg = CFG()
+        self.config = self.cfg.config
         # self.cfg.logger = self.cfg.logger
 
         self.dl_dict = {}
@@ -186,7 +187,8 @@ class Restore:
         }
 
         if output.is_file(self.stored_local_path['restored_marks']):
-            self.cfg.logger.info(f"[RESTORE PASS] Already restored. If you want to start over, delete the '{self.stored_local_path['restored_marks']}' file.")
+            self.cfg.logger.info(
+                f"[RESTORE PASS] Already restored. If you want to start over, delete the '{self.stored_local_path['restored_marks']}' file.")
             exit()
         for log_file in self.log_files.values():
             if output.is_file(log_file):
@@ -278,7 +280,8 @@ class Restore:
             self.file_download(get_index_file, self.restore_path, hash_value="skip")
             self.cfg.logger.info(f"[aria] Get index file, download_url_type = {self.download_url_type}, url = {get_index_file}")
             cmd = f"aria2c -i {self.restore_path}/{get_index_file.split('/')[-1]} -d {self.db_path} {cmd_opt}"
-            command_result = base.run_execute(cmd, capture_output=False, hook_function=base.write_logging, log_filename=f"{self.log_files['download']}")
+            command_result = base.run_execute(cmd, capture_output=False, hook_function=base.write_logging,
+                                              log_filename=f"{self.log_files['download']}")
 
         elif self.download_url_type:
             # S3 또는 Cloudfront URL check
@@ -300,7 +303,22 @@ class Restore:
 
         run_elapsed = default_timer() - run_start_time
         elapsed_time = "{:5.3f}s".format(run_elapsed)
-        self.cfg.logger.info(f"[RESTORE] Completed downloading. elapsed_time={elapsed_time}s, {converter.format_seconds_to_hhmmss(elapsed_time)}")
+        completed_msg = f"[RESTORE] Completed downloading. elapsed_time={elapsed_time}s, {converter.format_seconds_to_hhmmss(elapsed_time)}"
+        self.cfg.logger.info(completed_msg)
+        try:
+            if self.config['settings']['env'].get('SLACK_WH_URL', None):
+                output.send_slack(
+                    url=self.config['settings']['env']['SLACK_WH_URL'],
+                    msg_text=self.result_formatter(completed_msg),
+                    title='Restore',
+                    msg_level='error'
+                )
+        except Exception as e:
+            self.cfg.logger.error(f"[ERROR] send_slack {e}")
+
+    def result_formatter(self, log: str):
+        return_str = f"[{datetime.today().strftime('%Y-%m-%d %H:%M:%S')}] {log}"
+        return return_str
 
     def send_slack(self, msg_text=None, msg_level="info"):
         if self.is_send and msg_text:
@@ -501,7 +519,8 @@ class Restore:
                     diff_rst = self.download_diff(local_dl_file, hash_value)
                     if diff_rst == 'nok':
                         os.remove(local_dl_file)
-                        self.cfg.logger.info(f'{threading.get_ident()}, download_url={download_url.split("/")[-1]}, diff_rst={diff_rst} , delete={local_dl_file}')
+                        self.cfg.logger.info(
+                            f'{threading.get_ident()}, download_url={download_url.split("/")[-1]}, diff_rst={diff_rst} , delete={local_dl_file}')
                         diff_rst = None
 
             if diff_rst is None:
