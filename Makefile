@@ -172,7 +172,7 @@ show_labels: make_build_args
 
 build_ci:
 		cd $(GOLOOP_PATH) && $(MAKE) goloop-icon-image
-		docker build --build-arg BASE_IMAGE=$(BASE_IMAGE) --build-arg IS_NTP_BUILD=$(IS_NTP_BUILD) --build-arg NTP_VERSION=$(NTP_VERSION) -f Dockerfile \
+		docker build $(shell cat BUILD_ARGS) -f Dockerfile \
 		-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
 		docker rmi -f goloop-icon
 
