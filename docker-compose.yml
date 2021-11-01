@@ -7,12 +7,10 @@ services:
     network_mode: "host"
     stdin_open: true
     environment:
-      SERVICE: "MainNet"
-      #IS_AUTOGEN_CERT: "true"
-      FASTEST_START: "true"
       SERVICE: "MainNet"  # MainNet, SeJong
-      GOLOOP_LOG_LEVEL: "debug" # trace, debug, info, warn, error, fatal, panic          
-      KEY_STORE_FILENAME: "INPUT_YOUR_KEY_STORE_FILENAME" # e.g. keystore.json read a config/keystore.json  
+      #IS_AUTOGEN_CERT: "true"
+      GOLOOP_LOG_LEVEL: "debug" # trace, debug, info, warn, error, fatal, panic
+      KEY_STORE_FILENAME: "INPUT_YOUR_KEY_STORE_FILENAME" # e.g. keystore.json read a config/keystore.json
       KEY_PASSWORD: "INPUT_YOUR_KEY_PASSWORD" # e.g. "/goloop/config/keystore.json" read a "config/keystore.json" of host machine
       FASTEST_START: "true"    # It can be restored from latest Snapshot DB.
       # You must enter your ICON1 node address. Recent blocks that are not in the backup DB are synchronized from your ICON1 node.
