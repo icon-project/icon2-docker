@@ -33,6 +33,7 @@ ifeq ($(MAKECMDGOALS) , bash)
 	DOWNLOAD_URL:="https://networkinfo.solidwallet.io/info"
 	DOWNLOAD_URL_TYPE:="indexing"
 #	SEEDS:="20.20.6.86:7100"
+#	AUTO_SEEDS:=True
 	SERVICE:="MainNet"
 #	CC_DEBUG:="true"
 	IS_AUTOGEN_CERT:=true
