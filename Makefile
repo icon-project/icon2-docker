@@ -170,7 +170,7 @@ build: make_build_args
 show_labels: make_build_args
 		docker $(REPO_HUB)/$(NAME):$(TAGNAME) | jq .[].Config.Labels
 
-build_ci: make_build_args
+build_ci: make_build_args change_version
 		cd $(GOLOOP_PATH) && $(MAKE) goloop-icon-image
 		docker build $(shell cat BUILD_ARGS) -f Dockerfile \
 		-t $(REPO_HUB)/$(NAME):$(TAGNAME) .

@@ -52,12 +52,10 @@ class ChainInit:
     def set_configure(self, wait_state=True):
         payload = {}
         prev_config = self.ctl.view_chain(detail=True).get_json()
-        # self.config['settings']['env']['SEEDS'] = "35.73.47.171:7100"
-        # self.config['settings']['env']['ROLE'] = 3
 
         now_config = {
             "role": int(self.config['settings']['env'].get('ROLE', 0)),
-            "seedAddress": self.config['settings']['env'].get('SEEDS', None),  ## ? 어떤 값?
+            "seedAddress": self.config['settings']['env'].get('SEEDS', None),
         }
         self.cfg.logger.info(f"Control Chain: prev_config={prev_config}")
         self.cfg.logger.info(f"Control Chain: now_config={now_config}")
