@@ -262,7 +262,6 @@ class Restore:
 
         if self.download_url_type == "indexing":
             cmd = f"aria2c -i {self.stored_local_path['index_url']} -d {self.db_path} {cmd_opt}"
-            # open.json(self.stored_local_path['checksum_url']
             total_file_count = len(output.open_json(self.stored_local_path['checksum_url']))
             self.cfg.logger.info(f"[RESTORE] total_file_count = {total_file_count}")
 
@@ -302,7 +301,7 @@ class Restore:
             raise Exception(f"Error occurred downloading backup DB \n cmd: '{cmd}', \n stderr: {command_result.get('stderr')}")
 
         run_elapsed = default_timer() - run_start_time
-        elapsed_time = "{:5.3f}s".format(run_elapsed)
+        elapsed_time = "{:5.3f}".format(run_elapsed)
         completed_msg = f"[RESTORE] Completed downloading. elapsed_time={elapsed_time}s, {converter.format_seconds_to_hhmmss(run_elapsed)}"
         self.cfg.logger.info(completed_msg)
         try:
@@ -328,7 +327,6 @@ class Restore:
         try:
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name)
-                # log_print(f"++ {line_info()} | create : {dir_name}", "green")
                 self.cfg.logger.info(f"[RESTORE] Create a restore directory : {dir_name}")
         except OSError:
             raise OSError(f"-- {line_info()} | Error: Creating directory fail. : {dir_name}")

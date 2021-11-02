@@ -63,7 +63,7 @@ def main():
     docker_path = "/app/goloop"
     db_dir = "/app/goloop/data"
     send_url = (
-        "https://hooks.slack.com/services/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"
+        ""
     )
     region = "kr"
 

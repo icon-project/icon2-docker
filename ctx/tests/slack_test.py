@@ -12,7 +12,7 @@ res = base.run_execute("ls -al")
 output.dump(res)
 
 send_res = output.send_slack(
-    url="https://hooks.slack.com/services/TBB39FZFZ/B02DVBSUGRH/123123213",
+    url="WEBHOOK_URL",
     msg_text="test"
 )
 
