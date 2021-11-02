@@ -1,8 +1,22 @@
 ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
 ARG IS_NTP_BUILD
+ARG VERSION
+ARG BUILD_DATE
+ARG VCS_REF
 ARG NTP_VERSION=ntp-4.2.8p15
 
-FROM ${BASE_IMAGE}
+LABEL maintainer="infra team" \
+      org.label-schema.build-date="${BUILD_DATE}" \
+      org.label-schema.name="icon2-docker" \
+      org.label-schema.description="Docker images for operating the ICON2 network." \
+      org.label-schema.url="https://www.iconloop.com/" \
+      org.label-schema.vcs-ref="${VCS_REF}" \
+      org.label-schema.vcs-url="https://github.com/icon-project/icon2-docker" \
+      org.label-schema.vendor="ICONLOOP Inc." \
+      org.label-schema.version="${VERSION}-${VCS_REF}"
+
 ENV IS_DOCKER=true \
     PATH=$PATH:/ctx/bin \
     GOLOOP_ENGINES='python,java' \
@@ -11,8 +25,10 @@ ENV IS_DOCKER=true \
     GOLOOP_RPC_DUMP='true' \
     GOLOOP_CONSOLE_LEVEL='debug' \
     GOLOOP_LOG_LEVEL='debug' \
-    BASE_DIR='/goloop'
-
+    BASE_DIR='/goloop' \
+    VERSION=$VERSION \
+    BUILD_DATE=$BUILD_DATE \
+    VCS_REF=$VCS_REF
 
 RUN apk update && \
     apk add --no-cache bash vim tree nmap git ncurses curl gomplate logrotate aria2 jq&& \
@@ -24,7 +40,6 @@ RUN chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer 
 ADD src/ntpdate /usr/sbin/ntpdate
 ADD ctx /ctx
 ADD s6 /etc/
-
 
 RUN if [ "${IS_NTP_BUILD}" == "true" ]; then \
         wget http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/${NTP_VERSION}.tar.gz && \

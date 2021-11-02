@@ -31,7 +31,7 @@ print(converter.todaydate())
 backup.Backup(
     db_path="/Users/jinwoo/work/ICON2_TEST",
     profile="upload_test",
-    send_url="https://hooks.slack.com/services/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"
+    send_url=""
 )
 
 
@@ -41,4 +41,4 @@ backup.Backup(
 
 
 
-        
+

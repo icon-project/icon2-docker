@@ -1,6 +1,6 @@
 REPO_HUB = iconloop
 NAME = icon2-node
-VERSION = v1.0.4
+VERSION = v1.0.6
 NTP_VERSION = ntp-4.2.8p15
 IS_LOCAL = true
 BASE_IMAGE = goloop-icon
@@ -21,7 +21,6 @@ endif
 TAGNAME = $(VERSION)
 VCS_REF = $(strip $(shell git rev-parse --short HEAD))
 BUILD_DATE = $(strip $(shell date -u +"%Y-%m-%dT%H:%M:%S%Z"))
-
 GIT_DIRTY  = $(shell cd ${GOLOOP_PATH}; git diff --shortstat 2> /dev/null | tail -n1 )
 
 ifeq ($(IS_LOCAL), true)
@@ -34,6 +33,7 @@ ifeq ($(MAKECMDGOALS) , bash)
 	DOWNLOAD_URL:="https://networkinfo.solidwallet.io/info"
 	DOWNLOAD_URL_TYPE:="indexing"
 #	SEEDS:="20.20.6.86:7100"
+#	AUTO_SEEDS:=True
 	SERVICE:="MainNet"
 #	CC_DEBUG:="true"
 	IS_AUTOGEN_CERT:=true
@@ -107,7 +107,7 @@ make_build_args:
 			 $(if  \
 				 $(filter-out environment% default automatic, $(origin $V) ), \
 				 	 $($V=$($V)) \
-				 $(if $(filter-out "SHELL" "%_COLOR" "%_STRING" "MAKE%" "colorecho" ".DEFAULT_GOAL" "CURDIR" "TEST_FILES" "DOCKER_BUILD_OPTION", "$V" ),  \
+				 $(if $(filter-out "SHELL" "%_COLOR" "%_STRING" "MAKE%" "colorecho" ".DEFAULT_GOAL" "CURDIR" "TEST_FILES" "DOCKER_BUILD_OPTION" "GIT_DIRTY", "$V" ),  \
 					$(shell echo $(ECHO_OPTION) '$(OK_COLOR)  $V = $(WARN_COLOR) $($V) $(NO_COLOR) ' >&2;) \
 				 	$(shell echo "--build-arg $V=$($V)  " >> BUILD_ARGS)\
 				  )\
@@ -166,9 +166,13 @@ build: make_build_args
 			-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
 		docker rmi -f goloop-icon
 
-build_ci:
+
+show_labels: make_build_args
+		docker $(REPO_HUB)/$(NAME):$(TAGNAME) | jq .[].Config.Labels
+
+build_ci: make_build_args change_version
 		cd $(GOLOOP_PATH) && $(MAKE) goloop-icon-image
-		docker build --build-arg BASE_IMAGE=$(BASE_IMAGE) --build-arg IS_NTP_BUILD=$(IS_NTP_BUILD) --build-arg NTP_VERSION=$(NTP_VERSION) -f Dockerfile \
+		docker build $(shell cat BUILD_ARGS) -f Dockerfile \
 		-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
 		docker rmi -f goloop-icon
 

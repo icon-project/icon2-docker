@@ -235,14 +235,10 @@ def send_slack(url, msg_text, title=None, send_user_name="CtxBot", msg_level='in
     if url is None:
         cprint("[ERROR] slack webhook url is None", "red")
         return False
-        # raise ValueError("Slack webooks url is None")
-        # raise ValueError("url is None")
-    # Message Level color
     p_color = get_level_color(msg_level)
 
     payload = {
         # https://app.slack.com/block-kit-builder
-        # "channel": channel_name,
         "username": send_user_name,
         "text": msg_title,
         "blocks": [
@@ -284,12 +280,16 @@ def send_slack(url, msg_text, title=None, send_user_name="CtxBot", msg_level='in
             }
         ]
     }
+    try:
+        post_result = requests.post(url, json=payload, verify=False, timeout=15)
+        if post_result and post_result.status_code == 200 and post_result.text == "ok":
+            cfg.logger.info(f"[OK][Slack] Send slack")
+            return True
+        else:
+            cfg.logger.error(f"[ERROR][Slack] Got errors, status_code={post_result.status_code}, text={post_result.text}")
+            return False
 
-    post_result = requests.post(url, json=payload, verify=False)
-    if post_result and post_result.status_code == 200 and post_result.text == "ok":
-        return True
-    else:
-        #TODO logging
-        cprint(f"status={post_result.status_code}, text={post_result.text}", "red")
+    except Exception as e:
+        cfg.logger.error(f"[ERROR][Slack] Got errors -> {e}")
         return False
 

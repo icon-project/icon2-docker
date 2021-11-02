@@ -49,9 +49,57 @@ class ChainInit:
                 )
                 self.cfg.logger.info(f"{rs}")
 
+    def set_configure(self, wait_state=True):
+        payload = {}
+        prev_config = self.ctl.view_chain(detail=True).get_json()
+
+        now_config = {
+            "role": int(self.config['settings']['env'].get('ROLE', 0)),
+            "seedAddress": self.config['settings']['env'].get('SEEDS', None),
+        }
+        self.cfg.logger.info(f"Control Chain: prev_config={prev_config}")
+        self.cfg.logger.info(f"Control Chain: now_config={now_config}")
+
+        for config_key, config_value in now_config.items():
+            if config_value is not None and prev_config.get(config_key, 'THIS_IS_ERROR_VALUE') != config_value:
+                self.cfg.logger.info(f"Control Chain: Set configure key=\"{config_key}\", value=\"{prev_config.get(config_key)}\" => \"{config_value}\"")
+                payload[config_key] = config_value
+
+        if payload:
+            self.ctl.stop()
+            if wait_state:
+                res = self.ctl.chain_config(payload=payload)
+            else:
+                self.cfg.logger.info(f"***** Control Chain: stop()")
+                self.ctl.stop()
+                self.cfg.logger.info(f"***** Control Chain: Create ControlChain()")
+                wait_ctl = socket_request.ControlChain(
+                    unix_socket=self.cfg.config.get("CLI_SOCK", "/goloop/data/cli.sock"),
+                    debug=self.config['settings']['env'].get('CC_DEBUG', False),
+                    wait_state=wait_state
+                )
+                self.cfg.logger.info(f"***** Control Chain: chain_config()")
+                res = wait_ctl.chain_config(payload=payload)
+
+            if res and res.get_json()['state'] == "OK":
+                self.cfg.logger.info(f"Control Chain: chain_config() => {res.get_json()['state']}")
+            else:
+                self.cfg.logger.error(f"Control Chain: got errors={res}")
+
+            changed_res = self.ctl.view_chain(detail=True).get_json()
+            for config_key, config_value in payload.items():
+                if changed_res.get(config_key) == config_value:
+                    self.cfg.logger.info(f"Control Chain: Successful Change key=\"{config_key}\", value=\"{changed_res[config_key]}\"")
+                else:
+                    self.cfg.logger.error(f"Control Chain: Failed Change key=\"{config_key}\", value=\"{config_value}\" => \"{changed_res[config_key]}\"")
+        else:
+            self.cfg.logger.info(f"Control Chain: Set configure, No actions")
+
     def starter(self, ):
         time.sleep(self.config['settings']['mig'].get('MIG_REST_TIME', 5))
-
+        if not self.config['settings']['env'].get('SEEDS'):
+            self.get_seeds()
+        self.cfg.logger.info(f"Chain Starter: SEEDS={self.config['settings']['env'].get('SEEDS')}")
         if self.config['settings']['env'].get('FASTEST_START') is True:
             self.cfg.logger.info(f"Control Chain: START {self.ctl.get_state()}, FASTEST_START={self.config['settings']['env']['FASTEST_START']}")
             if self.config['settings']['mig'].get('MIG_COMPLETED') is False and self.config['settings']['mig'].get('MIGRATION_START') is True:
@@ -66,17 +114,15 @@ class ChainInit:
                     f"{os.path.join(self.base_dir, 'import_config.json')}",
                     payload
                 )
+                self.set_configure(wait_state=False)
                 self.ctl.import_icon(payload=payload)
             else:
+                self.set_configure(wait_state=True)
                 self.cfg.logger.info(f"ICON2 DB after Stage3")
                 self.ctl.start()
         else:
             res = self.ctl.get_state()
             if isinstance(res, dict) and res.get('cid', None) is None:
-                self.cfg.logger.info(f"Control Chain: JOIN, AUTO_SEEDS={self.config['settings']['env'].get('AUTO_SEEDS')} "
-                                     f"SEEDS={self.config['settings']['env'].get('SEEDS')}")
-                if self.config['settings']['env'].get('AUTO_SEEDS') is True and not self.config['settings']['env'].get('SEEDS'):
-                    self.get_seeds()
                 res = self.ctl.join(
                     seedAddress=self.config['settings']['env'].get('SEEDS', '').split(','),
                     role=self.config['settings']['env'].get('ROLE', 0),
@@ -84,6 +130,9 @@ class ChainInit:
                 )
                 self.cfg.logger.info(f"Please check joining: {res}")
                 time.sleep(3)
+            else:
+                self.set_configure(wait_state=True)
+
             self.cfg.logger.info(f"Control Chain: START {self.ctl.get_state()}")
             self.ctl.start()
         rs = self.ctl.get_state()
