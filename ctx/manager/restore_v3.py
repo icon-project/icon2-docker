@@ -303,7 +303,7 @@ class Restore:
 
         run_elapsed = default_timer() - run_start_time
         elapsed_time = "{:5.3f}s".format(run_elapsed)
-        completed_msg = f"[RESTORE] Completed downloading. elapsed_time={elapsed_time}s, {converter.format_seconds_to_hhmmss(elapsed_time)}"
+        completed_msg = f"[RESTORE] Completed downloading. elapsed_time={elapsed_time}s, {converter.format_seconds_to_hhmmss(run_elapsed)}"
         self.cfg.logger.info(completed_msg)
         try:
             if self.config['settings']['env'].get('SLACK_WH_URL', None):
