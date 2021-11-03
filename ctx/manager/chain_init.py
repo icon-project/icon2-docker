@@ -56,6 +56,7 @@ class ChainInit:
         now_config = {
             "role": int(self.config['settings']['env'].get('ROLE', 0)),
             "seedAddress": self.config['settings']['env'].get('SEEDS', None),
+            "rpcIncludeDebug": self.config['settings']['env'].get('RPC_INCLUDE_DEBUG', False)
         }
         self.cfg.logger.info(f"Control Chain: prev_config={prev_config}")
         self.cfg.logger.info(f"Control Chain: now_config={now_config}")
