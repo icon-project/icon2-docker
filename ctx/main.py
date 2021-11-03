@@ -14,7 +14,7 @@ cfg.get_config(True)
 for log_file in cfg.config['settings']['env']['COMPOSE_ENV'].get('DOCKER_LOG_FILES').split(','):
     cfg.loggers[log_file] = cfg.init_logger(log_file, 'debug')
 
-time.sleep(5)
+time.sleep(15)
 cfg.logger = cfg.get_logger('chain.log')
 cfg.logger.info("Start ChainInit()")
 
