@@ -73,6 +73,7 @@ class ChainInit:
                 try:
                     res = self.ctl.chain_config(payload=payload)
                 except Exception as e:
+                    res = None
                     self.cfg.logger.error(f"[Control Chain] error chain_config - {e}")
             else:
                 self.cfg.logger.info(f"***** Control Chain: stop()")
