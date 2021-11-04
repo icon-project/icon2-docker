@@ -34,7 +34,7 @@ class ChainInit:
                 self.config['settings']['env']['CID']
             )
             if inspect.get('error'):
-                self.cfg.logger.error(f"{inspect.get('error')}")
+                self.cfg.logger.error(f"[Control Chain] get inspect error - {inspect.get('error')}")
             else:
                 for p2p_addr, prep_addr in inspect['module']['network']['p2p']['roots'].items():
                     if prep_addr in preps_addr:
@@ -98,6 +98,7 @@ class ChainInit:
 
     def starter(self, ):
         time.sleep(self.config['settings']['mig'].get('MIG_REST_TIME', 5))
+        self.cfg.logger.info("-"*100)
         if not self.config['settings']['env'].get('SEEDS'):
             self.get_seeds()
         self.cfg.logger.info(f"Chain Starter: SEEDS={self.config['settings']['env'].get('SEEDS')}")
