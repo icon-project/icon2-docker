@@ -69,7 +69,11 @@ class ChainInit:
         if payload:
             self.ctl.stop()
             if wait_state:
-                res = self.ctl.chain_config(payload=payload)
+                self.cfg.logger.info(f"***** Control Chain: wait_state={wait_state}")
+                try:
+                    res = self.ctl.chain_config(payload=payload)
+                except Exception as e:
+                    self.cfg.logger.error(f"[Control Chain] error chain_config - {e}")
             else:
                 self.cfg.logger.info(f"***** Control Chain: stop()")
                 self.ctl.stop()
