@@ -18,7 +18,8 @@ class ChainInit:
         self.config = self.cfg.config
         self.ctl = socket_request.ControlChain(
             unix_socket=self.cfg.config.get("CLI_SOCK", "/goloop/data/cli.sock"),
-            debug=self.config['settings']['env'].get('CC_DEBUG', False)
+            debug=self.config['settings']['env'].get('CC_DEBUG', False),
+            timeout=int(self.config['settings']['env'].get('MAIN_TIME_OUT', 15))
         )
         self.base_dir = self.config['settings']['env'].get('BASE_DIR')
 
