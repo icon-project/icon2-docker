@@ -37,7 +37,7 @@ services:
       network_mode: host
       restart: "on-failure"
       environment:
-         SERVICE: "MainNet"  # MainNet, SeJong
+         SERVICE: "MainNet"  # MainNet, SeJongNet  ## kind of network type 
          GOLOOP_LOG_LEVEL: "debug" # trace, debug, info, warn, error, fatal, panic          
          KEY_STORE_FILENAME: "INPUT_YOUR_KEY_STORE_FILENAME" # e.g. keystore.json read a config/keystore.json
          # e.g. "/goloop/config/keystore.json" read a "config/keystore.json" of host machine

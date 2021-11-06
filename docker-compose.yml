@@ -7,7 +7,7 @@ services:
     network_mode: "host"
     stdin_open: true
     environment:
-      SERVICE: "MainNet"  # MainNet, SeJongNet
+      SERVICE: "MainNet"  # MainNet, SeJongNet ## kind of network type
       #IS_AUTOGEN_CERT: "true"
       GOLOOP_LOG_LEVEL: "debug" # trace, debug, info, warn, error, fatal, panic
       KEY_STORE_FILENAME: "INPUT_YOUR_KEY_STORE_FILENAME" # e.g. keystore.json read a config/keystore.json
