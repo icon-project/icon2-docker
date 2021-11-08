@@ -6,6 +6,8 @@ export $(cat /goloop/.env)
 
 export BASE_DIR=${BASE_DIR:-"/goloop"}
 export GOLOOP_CONFIG=${GOLOOP_CONFIG:-"${BASE_DIR}/config/server.json"}
+export LOG_OUTPUT_TYPE=${LOG_OUTPUT_TYPE:-"file"}
+export BASE_DIR=${BASE_DIR:-"/goloop"}
 
 
 if [[ "${GOLOOP_CONFIG}" != "" && ! -f "${GOLOOP_CONFIG}" ]]; then
@@ -23,11 +25,12 @@ if [[ "${GOLOOP_CONFIG}" != "" && ! -f "${GOLOOP_CONFIG}" ]]; then
     bash -c "unset $UNSET ; $CMD 2>&1 | tee -a ${LOGFILE}"
 fi
 
-echo ">>>> Starting goloop server (${LOG_OUTPUT_TYPE}, ${BASE_DIR}, ${GOLOOP_CONFIG}) <<<<<" >> ${BASE_DIR}/logs/booting.log
-cd ${BASE_DIR:-"/goloop"}
+echo ">>>> Starting goloop server (${LOG_OUTPUT_TYPE}, ${BASE_DIR}, ${GOLOOP_CONFIG}}) <<<<<" >> ${BASE_DIR}/logs/booting.log
+cd ${BASE_DIR}
 source /goloop/venv/bin/activate
 if [[ "$LOG_OUTPUT_TYPE" == "file" ]]; then
-    goloop server start 2>&1 >> ${LOGFILE}
+#    goloop server start 2>&1 >> ${LOGFILE}
+    goloop server start 2>> ${LOGFILE}
 else
     goloop server start 2>&1 | tee -a ${LOGFILE}
 fi

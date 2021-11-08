@@ -44,6 +44,7 @@ ifeq ($(MAKECMDGOALS) , bash)
 #	MIGRATION_START="true"
 #	MIG_DB="true"
 	NTP_REFRESH_TIME:="30"
+	MAIN_TIME_OUT:="1"
 	ROLE:=0
 	GOLOOP_CONSOLE_LEVEL:="trace"
 	GOLOOP_LOG_LEVEL:="trace"
@@ -165,6 +166,9 @@ build: make_build_args
 			$(shell cat BUILD_ARGS) \
 			-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
 		docker rmi -f goloop-icon
+		$(call colorecho, "\n\nSuccessfully build '$(REPO_HUB)/$(NAME):$(TAGNAME)'")
+		@echo "==========================================================================="
+		@docker images | grep  $(REPO_HUB)/$(NAME) | grep $(TAGNAME)
 
 
 show_labels: make_build_args
