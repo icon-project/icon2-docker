@@ -24,11 +24,9 @@ class ChainInit:
             logger=self.cfg.logger,
             retry=3
         )
-
-        # while self.ctl.health_check().status_code != 200:
-        #     time.sleep(1)
-        #     print(self.ctl.health_check())
-
+        while self.ctl.health_check().status_code != 200:
+            time.sleep(1)
+            print(self.ctl.health_check())
         self.base_dir = self.config['settings']['env'].get('BASE_DIR')
 
     def get_seeds(self, ):
