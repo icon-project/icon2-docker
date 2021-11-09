@@ -23,7 +23,11 @@ class ConfigureSetter:
         self.config_dir = f"{self.base_dir}/config"
 
     def make_base_dir(self, ):
-        for node_dir in [self.base_dir, f"{self.base_dir}/config", f"{self.base_dir}/data", f"{self.base_dir}/logs"]:
+        for node_dir in [self.base_dir,
+                         f"{self.base_dir}/config",
+                         f"{self.config['settings']['icon2']['GOLOOP_NODE_DIR']}",
+                         f"{self.base_dir}/logs"
+                         ]:
             if not os.path.exists(node_dir):
                 os.mkdir(node_dir)
 
