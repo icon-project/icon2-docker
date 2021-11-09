@@ -19,10 +19,6 @@ class ChainInit:
         self.cfg.logger = self.cfg.get_logger('chain.log')
         self.config = self.cfg.config
         self.unix_socket = self.config['settings']['icon2'].get("GOLOOP_NODE_SOCK", "/goloop/data/cli.sock")
-
-        from devtools import debug
-        debug("*"*10, self.config['settings']['icon2'])
-
         self.ctl = socket_request.ControlChain(
             unix_socket=self.unix_socket,
             debug=self.config['settings']['env'].get('CC_DEBUG', False),

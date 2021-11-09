@@ -31,7 +31,8 @@
 
 
 source /ctx/functions.sh
-logging "${0}| Start ICON2 Manager - ${BASE_DIR}, ${GOLOOP_NODE_SOCK}, ${LOGDIR}, ${BOOTING_LOG}"
+
+logging "Start ICON2 Manager - ${BASE_DIR}, ${GOLOOP_NODE_SOCK}, ${LOGDIR}, ${BOOTING_LOG}"
 
 #echo "[02-manger/run] Start ICON2 Manager" >> ${BOOTING_LOG}
 
@@ -49,6 +50,6 @@ logging "${0}| Start ICON2 Manager - ${BASE_DIR}, ${GOLOOP_NODE_SOCK}, ${LOGDIR}
 #	sleep 1
 #done
 
-logging "${0}| Checked ${GOLOOP_NODE_SOCK} file!"
+logging "Checked ${GOLOOP_NODE_SOCK} file!"
 
 python3 /ctx/main.py

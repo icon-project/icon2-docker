@@ -15,11 +15,12 @@ function logging() {
     APPEND_STRING=${2:-"\n"}
     LOG_TYPE=${3:-"booting"}
     LOG_DATE=$(date +%Y%m%d)
+    SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
     if [[ ! -e "$LOGDIR" ]];then
         mkdir -p "$LOGDIR"
     fi
     if [[ ${APPEND_STRING} == "\n" ]] ;then
-        echo -ne "I|$(date '+%Y%m%d-%T.000000')|-| $MSG ${APPEND_STRING}" >> "${LOGDIR}/${LOG_TYPE}.log"
+        echo -ne "I|$(date '+%Y%m%d-%T.000000')|-|${SCRIPT_PATH}| $MSG ${APPEND_STRING}" >> "${LOGDIR}/${LOG_TYPE}.log"
     else
         echo -ne "$MSG ${APPEND_STRING}" >> "${LOGDIR}/${LOG_TYPE}.log"
     fi
