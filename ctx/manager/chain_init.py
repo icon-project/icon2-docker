@@ -1,6 +1,7 @@
 #!/usr/bin/with-contenv python3
 # -*- coding: utf-8 -*-
 import os
+import sys
 import yaml
 import time
 import requests
@@ -24,10 +25,18 @@ class ChainInit:
             logger=self.cfg.logger,
             retry=3
         )
-        while self.ctl.health_check().status_code != 200:
-            time.sleep(1)
-            print(self.ctl.health_check())
+        self.chain_socket_checker()
         self.base_dir = self.config['settings']['env'].get('BASE_DIR')
+
+    def chain_socket_checker(self, ):
+        try_cnt = 0
+        while self.ctl.health_check().status_code != 200:
+            print(self.ctl.health_check())
+            if try_cnt >= int(self.config['settings']['env'].get('MAIN_RETRY_COUNT', 3)):
+                self.cfg.logger.error("[CC] Socket connection failed.")
+                sys.exit(127)
+            try_cnt += 1
+            time.sleep(int(self.config['settings']['env'].get('MAIN_TIME_SLEEP', 10)))
 
     def get_seeds(self, ):
         seeds = list()
