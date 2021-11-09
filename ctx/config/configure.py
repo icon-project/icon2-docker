@@ -44,6 +44,13 @@ class Configure:
         self.about = {}
         self.get_version()
         self.config = dict()
+        self.second_env_dict = {
+            "GOLOOP_BACKUP_DIR": "backup",
+            "GOLOOP_EE_SOCKET": "ee.sock",
+            "GOLOOP_NODE_SOCK": "cli.sock",
+            "CPU_PROFILE": "cpu.profile",
+            "MEM_PROFILE": "mem.profile"
+        }
         self.compose_env = self._compose_env()
         self.log_dir = f"{self.compose_env['BASE_DIR']}/logs"
         if not os.path.isdir(self.log_dir):
@@ -113,6 +120,7 @@ class Configure:
                     for icon2_env in self.config['reference'].get('icon2_default').keys():
                         if self.config['settings']['icon2'].get(icon2_env, None) is None:
                             self.config['settings']['icon2'][icon2_env] = self.get_os_env(icon2_env)
+                    self.set_second_env(self.config['settings']['icon2']['GOLOOP_NODE_DIR'].rsplit('/', 1)[-1])
                     key_store_filename = self.config['settings']['env'].get("KEY_STORE_FILENAME", None)
                     if key_store_filename:
                         self.config['settings']['icon2']['GOLOOP_KEY_STORE'] = f"{os.getenv('BASE_DIR')}/config/{key_store_filename}"
@@ -144,6 +152,13 @@ class Configure:
             if os.getenv(mig_key):
                 self.config['settings']['mig'][mig_key] = self.get_os_env(mig_key)
         # self.logger.info(f"Initializing Configure\n{json.dumps(self.config['settings'], indent=4)}")
+
+    def set_second_env(self, dir_name):
+        for env_key, env_val in self.second_env_dict.items():
+            if os.getenv(env_key) is not None:
+                self.config['settings']['icon2'][env_key] = os.getenv(env_key)
+            else:
+                self.config['settings']['icon2'][env_key] = f"{os.getenv('BASE_DIR')}/{dir_name}/{env_val}"
 
     def get_os_env(self, env_key):
         if os.getenv(env_key) and os.getenv(env_key).lower() in ['true', 'false']:
