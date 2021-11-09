@@ -120,10 +120,10 @@ class Configure:
                     for icon2_env in self.config['reference'].get('icon2_default').keys():
                         if self.config['settings']['icon2'].get(icon2_env, None) is None:
                             self.config['settings']['icon2'][icon2_env] = self.get_os_env(icon2_env)
-                    self.set_second_env(self.config['settings']['icon2']['GOLOOP_NODE_DIR'].rsplit('/', 1)[-1])
+                    self.set_second_env(self.config['settings']['icon2']['GOLOOP_NODE_DIR'])
                     key_store_filename = self.config['settings']['env'].get("KEY_STORE_FILENAME", None)
                     if key_store_filename:
-                        self.config['settings']['icon2']['GOLOOP_KEY_STORE'] = f"{os.getenv('BASE_DIR')}/config/{key_store_filename}"
+                        self.config['settings']['icon2']['GOLOOP_KEY_STORE'] = f"{self.config['settings']['env']['BASE_DIR']}/config/{key_store_filename}"
                     else:
                         self.config['settings']['icon2']['GOLOOP_KEY_STORE'] = os.getenv('GOLOOP_KEY_STORE')
                     if self.config['settings']['env'].get('GOLOOP_P2P'):
@@ -158,7 +158,7 @@ class Configure:
             if os.getenv(env_key) is not None:
                 self.config['settings']['icon2'][env_key] = os.getenv(env_key)
             else:
-                self.config['settings']['icon2'][env_key] = f"{os.getenv('BASE_DIR')}/{dir_name}/{env_val}"
+                self.config['settings']['icon2'][env_key] = f"{os.path.join(dir_name, env_val)}"
 
     def get_os_env(self, env_key):
         if os.getenv(env_key) and os.getenv(env_key).lower() in ['true', 'false']:
