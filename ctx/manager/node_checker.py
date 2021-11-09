@@ -22,7 +22,8 @@ class NodeChecker:
         self.pc = PeerChecker()
         self.cfg = CFG(use_file=use_file)
         self.config = self.cfg.config
-        self.ctl = socket_request.ControlChain(unix_socket=self.cfg.config.get("CLI_SOCK", "/goloop/data/cli.sock"))
+        self.unix_socket = self.config['settings']['icon2'].get("GOLOOP_NODE_SOCK", "/goloop/data/cli.sock")
+        self.ctl = socket_request.ControlChain(unix_socket=self.unix_socket)
         self.cfg.logger = self.cfg.get_logger('health.log')
 
     def get_peer_goloop(self, peer_info):

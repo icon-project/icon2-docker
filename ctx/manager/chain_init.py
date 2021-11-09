@@ -18,8 +18,13 @@ class ChainInit:
         self.cfg = CFG(use_file=use_file)
         self.cfg.logger = self.cfg.get_logger('chain.log')
         self.config = self.cfg.config
+        self.unix_socket = self.config['settings']['icon2'].get("GOLOOP_NODE_SOCK", "/goloop/data/cli.sock")
+
+        from devtools import debug
+        debug("*"*10, self.config['settings']['icon2'])
+
         self.ctl = socket_request.ControlChain(
-            unix_socket=self.cfg.config.get("CLI_SOCK", "/goloop/data/cli.sock"),
+            unix_socket=self.unix_socket,
             debug=self.config['settings']['env'].get('CC_DEBUG', False),
             timeout=int(self.config['settings']['env'].get('MAIN_TIME_OUT', 15)),
             logger=self.cfg.logger,
@@ -31,12 +36,14 @@ class ChainInit:
     def chain_socket_checker(self, ):
         try_cnt = 0
         while self.ctl.health_check().status_code != 200:
-            print(self.ctl.health_check())
-            if try_cnt >= int(self.config['settings']['env'].get('MAIN_RETRY_COUNT', 3)):
-                self.cfg.logger.error("[CC] Socket connection failed.")
+            main_retry_count = int(self.config['settings']['env'].get('MAIN_RETRY_COUNT', 10))
+            sleep_count = int(self.config['settings']['env'].get('MAIN_TIME_SLEEP', 10))
+            self.cfg.logger.info(f"[CC][{try_cnt}/{main_retry_count}] {self.ctl.health_check()}, try sleep {sleep_count}s")
+            if try_cnt >= main_retry_count:
+                self.cfg.logger.error(f"[CC] Socket connection failed. {self.unix_socket}")
                 sys.exit(127)
             try_cnt += 1
-            time.sleep(int(self.config['settings']['env'].get('MAIN_TIME_SLEEP', 10)))
+            time.sleep(sleep_count)
 
     def get_seeds(self, ):
         seeds = list()

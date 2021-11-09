@@ -48,6 +48,8 @@ ifeq ($(MAKECMDGOALS) , bash)
 	ROLE:=0
 	GOLOOP_CONSOLE_LEVEL:="trace"
 	GOLOOP_LOG_LEVEL:="trace"
+#	GOLOOP_NODE_SOCK:="/goloop/cli.sock"
+#	GOLOOP_EE_SOCKET:="/goloop/ee.sock"
 
 endif
 
