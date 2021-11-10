@@ -22,7 +22,7 @@ class ChainInit:
         self.ctl = socket_request.ControlChain(
             unix_socket=self.unix_socket,
             debug=self.config['settings']['env'].get('CC_DEBUG', False),
-            timeout=int(self.config['settings']['env'].get('MAIN_TIME_OUT', 15)),
+            timeout=int(self.config['settings']['env'].get('MAIN_TIME_OUT', 30)),
             logger=self.cfg.logger,
             retry=3
         )
@@ -32,8 +32,8 @@ class ChainInit:
     def chain_socket_checker(self, ):
         try_cnt = 0
         while self.ctl.health_check().status_code != 200:
-            main_retry_count = int(self.config['settings']['env'].get('MAIN_RETRY_COUNT', 10))
-            sleep_count = int(self.config['settings']['env'].get('MAIN_TIME_SLEEP', 10))
+            main_retry_count = int(self.config['settings']['env'].get('MAIN_RETRY_COUNT', 200))
+            sleep_count = int(self.config['settings']['env'].get('MAIN_TIME_SLEEP', 1))
             self.cfg.logger.info(f"[CC][{try_cnt}/{main_retry_count}] {self.ctl.health_check()}, try sleep {sleep_count}s")
             if try_cnt >= main_retry_count:
                 self.cfg.logger.error(f"[CC] Socket connection failed. {self.unix_socket}")
@@ -124,7 +124,7 @@ class ChainInit:
                 self.ctl.stop()
                 self.cfg.logger.info(f"[CC] Create ControlChain()")
                 wait_ctl = socket_request.ControlChain(
-                    unix_socket=self.cfg.config.get("CLI_SOCK", "/goloop/data/cli.sock"),
+                    unix_socket=self.unix_socket,
                     debug=self.config['settings']['env'].get('CC_DEBUG', False),
                     wait_state=wait_state
                 )

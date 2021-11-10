@@ -1,55 +1,6 @@
 #!/usr/bin/with-contenv bash
-
-## TEST start
-#export BASE_DIR=${BASE_DIR:-"/goloop"}
-#export GOLOOP_NODE_SOCK=${GOLOOP_NODE_SOCK:-"${BASE_DIR}/data/cli.sock"}
-#export LOGDIR=${LOGDIR:-"${BASE_DIR}/logs"}
-#export BOOTING_LOG=${BOOTING_LOG:-"${LOGDIR}/booting.log"}
-#
-#
-#function logging() {
-#    MSG=$1
-#    APPEND_STRING=${2:-"\n"}
-#    LOG_TYPE=${3:-"booting"}
-##    LOG_PATH=${4:-"$LOGDIR"}
-#    LOG_DATE=$(date +%Y%m%d)
-#    if [[ ! -e "$LOGDIR" ]];then
-#        mkdir -p "$LOGDIR"
-#    fi
-#    if [[ ${APPEND_STRING} == "\n" ]] ;then
-#        echo -ne "I|$(date '+%Y%m%d %T.%3N')| $MSG ${APPEND_STRING}" >> "${LOGDIR}/${LOG_TYPE}.log"
-#    else
-#        echo -ne "$MSG ${APPEND_STRING}" >> "${LOGDIR}/${LOG_TYPE}.log"
-#    fi
-#}
-
-#if [[ ! -e "$LOGDIR" ]];then
-#    mkdir -p "$LOGDIR"
-#    logging "|${0}| make a log dir = ${LOGDIR}"
-#    echo "[02-manger/run] make a log dir = ${LOGDIR}"
-#fi
-
-
-source /ctx/functions.sh
+source /ctx/bin/functions.sh
 
 logging "Start ICON2 Manager - ${BASE_DIR}, ${GOLOOP_NODE_SOCK}, ${LOGDIR}, ${BOOTING_LOG}"
-
-#echo "[02-manger/run] Start ICON2 Manager" >> ${BOOTING_LOG}
-
-#while [ ! -S $GOLOOP_NODE_SOCK ];
-#do
-#  echo "[02-manger/run] Wait for create ${GOLOOP_NODE_SOCK} file." >> ${BOOTING_LOG}
-#	sleep 1
-#done
-#
-#echo "[02-manger/run] Checked ${GOLOOP_NODE_SOCK} file!" >> ${BOOTING_LOG}
-
-#while [ ! -S $GOLOOP_NODE_SOCK ];
-#do
-#    logging "${0}| Wait for create ${GOLOOP_NODE_SOCK} file."
-#	sleep 1
-#done
-
-logging "Checked ${GOLOOP_NODE_SOCK} file!"
 
 python3 /ctx/main.py

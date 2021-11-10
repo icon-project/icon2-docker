@@ -1,23 +1,15 @@
 #!/usr/bin/with-contenv bash
 
-#source /goloop/.env
-#export $(cat /goloop/.env)
-#export BASE_DIR=${BASE_DIR:-"/goloop"}
-#export GOLOOP_CONFIG=${GOLOOP_CONFIG:-"${BASE_DIR}/config/server.json"}
-#export LOG_OUTPUT_TYPE=${LOG_OUTPUT_TYPE:-"file"}
-#export BASE_DIR=${BASE_DIR:-"/goloop"}
 export $(cat /goloop/.env)
-source /ctx/functions.sh
+source /ctx/bin/functions.sh
 
 if [[ "${GOLOOP_CONFIG}" != "" && ! -f "${GOLOOP_CONFIG}" ]]; then
     UNSET="GOLOOP_CONFIG"
     CMD="goloop server save ${GOLOOP_CONFIG}"
-#    echo "generate ${GOLOOP_CONFIG}" >> ${LOGFILE}
     logging "generate ${GOLOOP_CONFIG} - ${CMD}"
     bash -c "unset $UNSET ; $CMD 2>&1 | tee -a ${BOOTING_LOG}"
 fi
 
-#echo ">>>> Starting goloop server (${LOG_OUTPUT_TYPE}, ${BASE_DIR}, ${GOLOOP_CONFIG}}) <<<<<" >> ${BASE_DIR}/logs/booting.log
 logging "Start goloop server (${LOG_OUTPUT_TYPE}, ${BASE_DIR}, ${GOLOOP_CONFIG})"
 
 cd ${BASE_DIR}
