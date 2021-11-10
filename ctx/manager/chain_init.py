@@ -6,6 +6,7 @@ import yaml
 import time
 import requests
 import socket_request
+from shutil import copy2
 
 from config.configure import Configure as CFG
 from common.converter import str2bool
@@ -178,13 +179,31 @@ class ChainInit:
         else:
             res = self.ctl.get_state()
             if isinstance(res, dict) and res.get('cid', None) is None:
+                network_name = self.config['settings']['env'].get('SERVICE')
+                self.cfg.logger.info(f"[CC] Join the Network, {network_name}")
+
+                if network_name == "MainNet":
+                    self.ctl.wait_state = False
+
                 res = self.ctl.join(
                     seedAddress=self.config['settings']['env'].get('SEEDS', '').split(','),
                     role=self.config['settings']['env'].get('ROLE', 0),
-                    gs_file=self.config['settings'].get('genesis_storage', '/goloop/config/icon_genesis.zip')
+                    gs_file=self.config['settings'].get('genesis_storage', '/goloop/config/icon_genesis.zip'),
                 )
                 self.cfg.logger.info(f"[CC] Please check joining: {res}")
                 time.sleep(3)
+
+                if network_name == "MainNet":
+                    v1_proof_file = "/ctx/mainnet_v1_block_proof/block_v1_proof.bin"
+                    mainnet_data_dir = f"{self.config['settings']['icon2']['GOLOOP_NODE_DIR']}/1"
+                    self.cfg.logger.info(f"[CC] Copy {v1_proof_file} to {mainnet_data_dir}")
+                    try:
+                        # os.makedirs(mainnet_data_dir)
+                        copy2(v1_proof_file, f"{mainnet_data_dir}/")
+                    except Exception as e:
+                        self.cfg.logger.info(f"[CC] Copy error - {e}")
+                    self.ctl.wait_state = True
+                    self.ctl.start()
             else:
                 self.set_configure(wait_state=True)
 
