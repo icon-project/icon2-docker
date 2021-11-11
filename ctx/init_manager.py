@@ -53,12 +53,13 @@ class InitManager:
 
     def print_banner(self):
         v_info = self.cfg.get_version()
+        config_version = self.cfg.config.get('version')
         self.cfg.logger.info(f" ██████╗████████╗██╗  ██╗")
-        self.cfg.logger.info(f"██╔════╝╚══██╔══╝╚██╗██╔╝")
-        self.cfg.logger.info(f"██║        ██║    ╚███╔╝  Goloop Version: {v_info.get('VERSION')}")
-        self.cfg.logger.info(f"██║        ██║    ██╔██╗  CTX Version:    {v_info.get('VCS_REF')}")
-        self.cfg.logger.info(f"╚██████╗   ██║   ██╔╝ ██╗ Build Date:     {v_info.get('BUILD_DATE')}")
-        self.cfg.logger.info(f" ╚═════╝   ╚═╝   ╚═╝  ╚═╝")
+        self.cfg.logger.info(f"██╔════╝╚══██╔══╝╚██╗██╔╝ Goloop Version:  {v_info.get('VERSION')}")
+        self.cfg.logger.info(f"██║        ██║    ╚███╔╝  CTX Version:     {v_info.get('VCS_REF')}")
+        self.cfg.logger.info(f"██║        ██║    ██╔██╗  Config Version:  {config_version}")
+        self.cfg.logger.info(f"╚██████╗   ██║   ██╔╝ ██╗ Build Date:      {v_info.get('BUILD_DATE')}")
+        self.cfg.logger.info(f" ╚═════╝   ╚═╝   ╚═╝  ╚═╝ ")
 
 
 if __name__ == '__main__':

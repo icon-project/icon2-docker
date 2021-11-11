@@ -1,6 +1,6 @@
 REPO_HUB = iconloop
 NAME = icon2-node
-VERSION = v1.0.8
+VERSION = v1.0.10
 NTP_VERSION = ntp-4.2.8p15
 IS_LOCAL = true
 BASE_IMAGE = goloop-icon
@@ -44,9 +44,12 @@ ifeq ($(MAKECMDGOALS) , bash)
 #	MIGRATION_START="true"
 #	MIG_DB="true"
 	NTP_REFRESH_TIME:="30"
+	MAIN_TIME_OUT:="1"
 	ROLE:=0
 	GOLOOP_CONSOLE_LEVEL:="trace"
 	GOLOOP_LOG_LEVEL:="trace"
+#	GOLOOP_NODE_SOCK:="/goloop/cli.sock"
+#	GOLOOP_EE_SOCKET:="/goloop/ee.sock"
 
 endif
 
@@ -165,6 +168,9 @@ build: make_build_args
 			$(shell cat BUILD_ARGS) \
 			-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
 		docker rmi -f goloop-icon
+		$(call colorecho, "\n\nSuccessfully build '$(REPO_HUB)/$(NAME):$(TAGNAME)'")
+		@echo "==========================================================================="
+		@docker images | grep  $(REPO_HUB)/$(NAME) | grep $(TAGNAME)
 
 
 show_labels: make_build_args

@@ -1,17 +1,6 @@
 #!/usr/bin/with-contenv bash
+source /ctx/bin/functions.sh
 
-## TEST start
-
-echo "ICON2 Manager"
-
-export BASE_DIR=${BASE_DIR:-"/goloop"}
-
-while [ ! -S ${BASE_DIR}/data/cli.sock ];
-do
-  echo ">>>> Wait for create ${BASE_DIR}/data/cli.sock file.. <<<<<" >> ${BASE_DIR}/logs/booting.log
-	sleep 1
-done
-
-echo ">>>> Checked ${BASE_DIR}/data/cli.sock file! <<<<<" >> ${BASE_DIR}/logs/booting.log
+logging "Start ICON2 Manager - ${BASE_DIR}, ${GOLOOP_NODE_SOCK}, ${LOGDIR}, ${BOOTING_LOG}"
 
 python3 /ctx/main.py

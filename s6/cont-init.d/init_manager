@@ -1,13 +1,13 @@
 #!/usr/bin/with-contenv bash
 
-## TEST start
-echo "[init_manager] ICON2 Configuration"
+source /ctx/bin/functions.sh
+logging "[init_manager] ICON2 Configuration"
 
 cd /ctx
 python3 init_manager.py
 
 if [[ $? != 0 ]]; then
-    echo "[init_manager] abnormal terminated. shuting down container"
+    logging "[init_manager] abnormal terminated. shutting down container"
     s6-svscanctl -t /var/run/s6/services
     sleep 5
 fi
