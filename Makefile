@@ -44,10 +44,11 @@ ifeq ($(MAKECMDGOALS) , bash)
 #	MIGRATION_START="true"
 #	MIG_DB="true"
 	NTP_REFRESH_TIME:="30"
-	MAIN_TIME_OUT:="1"
+	MAIN_TIME_OUT:="30"
 	ROLE:=0
 	GOLOOP_CONSOLE_LEVEL:="trace"
 	GOLOOP_LOG_LEVEL:="trace"
+	LOG_OUTPUT_TYPE:="console"
 #	GOLOOP_NODE_SOCK:="/goloop/cli.sock"
 #	GOLOOP_EE_SOCKET:="/goloop/ee.sock"
 

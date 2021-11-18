@@ -1,6 +1,7 @@
 #!/usr/bin/with-contenv bash
-export $(cat /goloop/.env)
-
+if [ -f /goloop/.env ]; then
+    export $(cat /goloop/.env)
+fi
 export BASE_DIR=${BASE_DIR:-"/goloop"}
 export LOG_OUTPUT_TYPE=${LOG_OUTPUT_TYPE:-"file"}
 export GOLOOP_CONFIG=${GOLOOP_CONFIG:-"${BASE_DIR}/config/server.json"}
