@@ -4,7 +4,136 @@ import os
 import string
 import random
 import binascii
+import re
 from datetime import datetime
+
+
+class UpdateType:
+    def __init__(self, config=None, logger=None):
+        if config is None:
+            config = {}
+        self.config = config
+        self.logger = logger
+        self.required_type = {}
+        self.return_result = {}
+
+        self.regex = dict(
+            ipaddr=r'((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9]{1,2})(\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9]{1,2})){3})',
+            port=r'(:((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|'
+                 r'([1-5][0-9]{4})|([0-5]{1,5})|([0-9]{1,4})))?$'
+        )
+
+        if self.config.get("settings") and self.config['settings'].get('env'):
+            self.settings_env = self.config['settings']['env']
+
+    def check(self):
+        self.parse_config()
+        for required_key, required_value in self.required_type.items():
+            if isinstance(required_value, dict) and required_value.get('default') and required_value.get("type"):
+                result = self.check_value_type(required_value.get('default'), required_value.get('type'), key=required_key)
+                # debug(result)
+                # print(f"required_key={required_key}, value={required_value}, result={result}")
+                self.return_result[required_key] = result
+        self.update_env_config()
+        return self.return_result
+
+    def parse_config(self, config=None):
+        if config is None:
+            config = self.config
+        for config_key, config_value in config.items():
+            if self.is_type_dict(config_value):
+                self.required_type[config_key] = {
+                    "default": config_value['default'],
+                    "type": config_value['type'],
+                }
+            elif isinstance(config_value, dict):
+                self.parse_config(config_value)
+
+    def update_env_config(self):
+        if self.settings_env:
+            for env_key, env_value in self.settings_env.items():
+                if env_key:
+                    required_type = self.required_type.get(env_key)
+                    if required_type:
+                        env_value = self.check_value_type(env_value, required_type.get('type'), key=env_key)
+                        self.logging(f"[Update] {env_key} = '{env_value}' ({required_type.get('type')})")
+                        self.return_result[env_key] = env_value
+                    else:
+                        self.logging(f"Undefined key: '{env_key}', value:'{env_value}'", "error")
+
+    @staticmethod
+    def is_type_dict(value):
+        if isinstance(value, dict) and value.get('default', "NOT_NONE") is not "NOT_NONE" and value.get('type'):
+            return True
+        return False
+
+    @staticmethod
+    def fill_not_none_value(value):
+        if value is None:
+            return ''
+        else:
+            return value
+
+    def check_value_type(self, value, required_type=None, key=None):
+        if required_type is None:
+            self.logging(f"{key} required_type is None", "error")
+
+        value = self.fill_not_none_value(value)
+        if required_type == "str":
+            return_value = str(value)
+        elif required_type == "int":
+            try:
+                return_value = int(value)
+            except ValueError:
+                self.logging(f"Invalid type {value}", "error")
+                raise Exception(f"Invalid type {value}")
+        elif required_type == "float":
+            return_value = float(value)
+        elif required_type == "bool":
+            return_value = str2bool(value)
+        elif required_type == "array":
+            return_value = str(value).split(",")
+        elif required_type == "list":
+            return_value = str(value).split(",")
+        elif required_type == "url":
+            if not re.findall(r'((http|https):((//)|(\\\\))+([\w\d:#@%/;$()~_?\+-=\\\.&](#!)?)*)', value):
+                self.logging(f"Invalid {key}, required_type={required_type}, value={value}", "error")
+            return_value = str(value)
+        elif required_type == "ip_port":
+            if not re.findall(
+                    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
+                    r'localhost|'  # localhost...
+                    r'(([\w\d:#@%/;$()~_?\+-=\\\.&](#!)?)*)|'
+                    rf'^(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9]{1, 2})'
+                    r'(\.(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9]{1,2})){3})'
+                    r'(:((6553[0-5])|(655[0-2][0-9])|(65[0-4][0-9]{2})|(6[0-4][0-9]{3})|'
+                    r'([1-5][0-9]{4})|([0-5]{1,5})|([0-9]{1,4})))$', value):
+                self.logging(f"Invalid {required_type}, value={value}", "error")
+                raise ValueError(f"Invalid {key}, required_type={required_type}, value={value}")
+            return_value = str(value)
+
+        elif required_type == "port":
+            if len(re.findall(fr'({self.regex["ipaddr"]})?({self.regex["port"]})', value)) <= 1:
+                self.logging(f"Invalid {required_type}, value={value}", "error")
+                raise ValueError(f"Invalid {key}, required_type={required_type}, value={value}")
+            return_value = str(value)
+
+        else:
+            return_value = value
+        return return_value
+
+    def logging(self, message=None, level="info"):
+        message_text = f"[CheckType] {message}"
+        if self.logger:
+            if level == "info" and hasattr(self.logger, "info"):
+                self.logger.info(message_text)
+            elif level == "error" and hasattr(self.logger, "error"):
+                print("error----")
+                self.logger.error(message_text)
+            elif level == "warn" and hasattr(self.logger, "warn"):
+                self.logger.warn(message_text)
+        else:
+            print(f"[{level.upper()}]{message_text}")
 
 
 def random_passwd(digit=8):
