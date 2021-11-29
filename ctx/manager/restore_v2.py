@@ -514,26 +514,32 @@ def main():
     '''
     icon2_config = config['settings']['icon2']
     env_config = config['settings']['env']
-    compose_env_config = config['settings']['env']['COMPOSE_ENV']
+    # compose_env_config = config['settings']['env']['COMPOSE_ENV']
 
     ### Goloop DB PATH
     if icon2_config.get('GOLOOP_NODE_DIR') :
         db_path = icon2_config['GOLOOP_NODE_DIR']
     else :
         default_db_path = 'data'
-        base_dir = compose_env_config['BASE_DIR']
+        # base_dir = compose_env_config['BASE_DIR']
+        base_dir = env_config['BASE_DIR']
         db_path = os.path.join(base_dir, default_db_path)
 
 
     ### Restore Options 
     ### network  =  MainNet | SejongNet ....
-    network = env_config['SERVICE']  if env_config.get('SERVICE') else compose_env_config['SERVICE']
-    restore_path = env_config['RESTORE_PATH']  if env_config.get('RESTORE_PATH') else compose_env_config['RESTORE_PATH']
-    dl_force = env_config['DOWNLOAD_FORCE']  if env_config.get('DOWNLOAD_FORCE') else compose_env_config['DOWNLOAD_FORCE']
-    download_tool = env_config['DOWNLOAD_TOOL']  if env_config.get('DOWNLOAD_TOOL') else compose_env_config['DOWNLOAD_TOOL']
-    download_url = env_config['DOWNLOAD_URL']  if env_config.get('DOWNLOAD_URL') else compose_env_config['DOWNLOAD_URL']
-    download_url_type = env_config['DOWNLOAD_URL_TYPE']  if env_config.get('DOWNLOAD_URL_TYPE') else compose_env_config['DOWNLOAD_URL_TYPE']
-
+    # network = env_config['SERVICE']  if env_config.get('SERVICE') else compose_env_config['SERVICE']
+    # restore_path = env_config['RESTORE_PATH']  if env_config.get('RESTORE_PATH') else compose_env_config['RESTORE_PATH']
+    # dl_force = env_config['DOWNLOAD_FORCE']  if env_config.get('DOWNLOAD_FORCE') else compose_env_config['DOWNLOAD_FORCE']
+    # download_tool = env_config['DOWNLOAD_TOOL']  if env_config.get('DOWNLOAD_TOOL') else compose_env_config['DOWNLOAD_TOOL']
+    # download_url = env_config['DOWNLOAD_URL']  if env_config.get('DOWNLOAD_URL') else compose_env_config['DOWNLOAD_URL']
+    # download_url_type = env_config['DOWNLOAD_URL_TYPE']  if env_config.get('DOWNLOAD_URL_TYPE') else compose_env_config['DOWNLOAD_URL_TYPE']
+    network = env_config['SERVICE']
+    restore_path = env_config['RESTORE_PATH']
+    dl_force = env_config['DOWNLOAD_FORCE']
+    download_tool = env_config['DOWNLOAD_TOOL']
+    download_url = env_config['DOWNLOAD_URL']
+    download_url_type = env_config['DOWNLOAD_URL_TYPE']
 
     print(f'db_path = {db_path}')
     print(f'network = {network}')
