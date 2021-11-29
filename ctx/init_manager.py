@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-import json
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.configure import Configure as CFG
@@ -12,38 +11,36 @@ from config.configure_setter import ConfigureSetter as CS
 class InitManager:
     def __init__(self, ):
         self.cfg = CFG() # Configure
-        self.cs = CS() # ConfigureSetter
+        if self.cfg.base_env['ONLY_GOLOOP'] is False:
+            self.cs = CS() # ConfigureSetter
 
     def run(self, ):
         self.print_banner()
         self.cfg.logger.info(f"[INIT_CONFIG] Initializing Configuration")
-        for key, value in self.cfg.compose_env.items():
+        for key, value in self.cfg.base_env.items():
             self.cfg.logger.info(f"[INIT_CONFIG] {key} = {value} ({type(value).__name__})")
 
-        if self.cfg.compose_env.get('LOCAL_TEST') is True:
+        if self.cfg.base_env.get('LOCAL_TEST') is True:
             ip_type = "LOCAL_TEST"
         else:
             ip_type = "PUBLIC"
-        self.cfg.logger.info(f"[INIT_CONFIG] GOLOOP_P2P = \"{self.cfg.config['settings']['icon2']['GOLOOP_P2P']}\" ({ip_type})")
+        self.cfg.logger.info(f"[INIT_CONFIG] GOLOOP_P2P = \"{self.cfg.config['GOLOOP_P2P']}\" ({ip_type})")
 
-        settings = self.cfg.config['settings']['env']
-        if settings:
-            for key, value in settings.items():
-                if key != "COMPOSE_ENV":
-                    if key == 'KEY_PASSWORD' and len(value):
-                        value = '*' * len(str(value))
-                    self.cfg.logger.info(f"[DOCKER_ENV] {key} = {value} ({type(value).__name__})")
+        if self.cfg.config:
+            for key, value in self.cfg.config.items():
+                if key == 'KEY_PASSWORD' and len(value):
+                    value = '*' * len(str(value))
+                if key.startswith("GOLOOP") is False:
+                    self.cfg.logger.info(f"[CTX] {key} = {value} ({type(value).__name__})")
 
-        settings = self.cfg.config['settings']['icon2']
-        if settings:
-            for key, value in settings.items():
-                if value is not None:
+        if self.cfg.config:
+            for key, value in self.cfg.config.items():
+                if key.startswith("GOLOOP") is True and value is not None:
                     self.cfg.logger.info(f"[ICON2] {key} = {value} ({type(value).__name__})")
 
         self.cs.create_yaml_file()
         self.cs.create_env_file()
         self.cs.make_base_dir()
-        # if self.cfg.config['settings']['env'].get('IS_AUTOGEN_CERT') is True:
         self.cs.create_key()
         self.cs.create_genesis_json()
         self.cs.create_gs_zip()
@@ -64,4 +61,5 @@ class InitManager:
 
 if __name__ == '__main__':
     IM = InitManager()
-    IM.run()
+    if IM.cfg.base_env['ONLY_GOLOOP'] is False:
+        IM.run()

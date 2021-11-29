@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import re
 import os
-import sys
 import time
 import asyncio
 import subprocess
@@ -41,7 +40,7 @@ class NTPDaemon:
         while True:
             self.cfg.logger.info(f"Local Time : {self.localtime()}")
             self.cfg.logger.info(f"UTC Time   : {self.utctime()}")
-            best_ntp = self.config['settings']['env'].get('NTP_SERVER', False)
+            best_ntp = self.config.get('NTP_SERVER', False)
             if best_ntp is False:
                 try:
                     best_ntp = self.compare_ntp()[0][0]
@@ -61,10 +60,10 @@ class NTPDaemon:
             await asyncio.sleep(self.check_time * 60)
 
     def compare_ntp(self, ):
-        if self.config['settings']['env'].get('NTP_SERVERS'):
-            ntp_servers = self.config['settings']['env'].get('NTP_SERVERS')
+        if self.config.get('NTP_SERVERS'):
+            ntp_servers = self.config.get('NTP_SERVERS')
         else:
-            ntp_servers = self.config['settings']['env']['COMPOSE_ENV'].get('NTP_SERVERS')
+            ntp_servers = self.config.get('NTP_SERVERS')
 
         if ntp_servers:
             try:
@@ -85,8 +84,8 @@ class NTPDaemon:
             except Exception as e:
                 self.cfg.logger.error(f"[NTP] NTP error - {e}")
         else:
-            self.cfg.logger.error(f"[NTP] env={self.config['settings']['env'].get('NTP_SERVERS')}, "
-                                  f"COMPOSE_ENV={self.config['settings']['env']['COMPOSE_ENV'].get('NTP_SERVERS')}")
+            self.cfg.logger.error(f"[NTP] env={self.config.get('NTP_SERVERS')}, "
+                                  f"COMPOSE_ENV={self.config.get('NTP_SERVERS')}")
 
     def ntp_run(self, cmd):
         rs = subprocess.check_output(cmd, shell=True, encoding='utf-8').split('\n')
