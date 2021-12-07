@@ -44,8 +44,8 @@ class Configure:
             "GOLOOP_BACKUP_DIR": "backup",
             "GOLOOP_EE_SOCKET": "ee.sock",
             "GOLOOP_NODE_SOCK": "cli.sock",
-            "CPU_PROFILE": "cpu.profile",
-            "MEM_PROFILE": "mem.profile"
+            "GOLOOP_CPUPROFILE": "cpu.profile",
+            "GOLOOP_MEMPROFILE": "mem.profile"
         }
         self.base_env = self._base_env()
         self.log_dir = f"{self.base_env['BASE_DIR']}/logs"

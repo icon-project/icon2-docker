@@ -6,6 +6,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.configure import Configure as CFG
 from config.configure_setter import ConfigureSetter as CS
+from common import resources
 
 
 class InitManager:
@@ -16,6 +17,7 @@ class InitManager:
 
     def run(self, ):
         self.print_banner()
+        self.print_resources()
         self.cfg.logger.info(f"[INIT_CONFIG] Initializing Configuration")
         for key, value in self.cfg.base_env.items():
             self.cfg.logger.info(f"[INIT_CONFIG] {key} = {value} ({type(value).__name__})")
@@ -57,6 +59,14 @@ class InitManager:
         self.cfg.logger.info(f"██║        ██║    ██╔██╗  Config Version:  {config_version}")
         self.cfg.logger.info(f"╚██████╗   ██║   ██╔╝ ██╗ Build Date:      {v_info.get('BUILD_DATE')}")
         self.cfg.logger.info(f" ╚═════╝   ╚═╝   ╚═╝  ╚═╝ ")
+
+    def print_resources(self):
+        try:
+            self.cfg.logger.info(f"[Resources] System Information: {resources.get_platform_info()}")
+            self.cfg.logger.info(f"[Resources] Memory Information: {resources.get_mem_info()} MB")
+            self.cfg.logger.info(f"[Resources] rlimit Information: {resources.get_rlimit_nofile()}")
+        except Exception as e:
+            self.cfg.logger.error(f"get resource error - {e}")
 
 
 if __name__ == '__main__':
