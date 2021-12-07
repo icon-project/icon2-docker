@@ -87,7 +87,7 @@ class Configure:
 
     def _base_env(self, ):
         temp_env = dict()
-        temp_env['CONFIG_URL'] = os.getenv('CONFIG_URL', 'https://networkinfo.solidwallet.io/icon2')
+        temp_env['CONFIG_URL'] = os.getenv('CONFIG_URL', 'https://networkinfo.solidwallet.io/node_info')
         temp_env['SERVICE'] = os.getenv('SERVICE', 'MainNet')
         temp_env['CONFIG_URL_FILE'] = os.getenv('CONFIG_URL_FILE', 'default_configure.yml')
         temp_env['CONFIG_LOCAL_FILE'] = os.getenv('CONFIG_LOCAL_FILE', '/goloop/configure.yml')
