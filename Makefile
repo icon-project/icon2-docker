@@ -144,7 +144,7 @@ change_version:
 
 		$(call colorecho, "-- Change Goloop Version ${VERSION} --")
 		@git submodule update --init --recursive --remote;
-		@cd $(GOLOOP_PATH) && git checkout $(VERSION);
+		@cd $(GOLOOP_PATH) && git fetch origin --tags && git checkout $(VERSION);
 
 		@if [ '${GIT_DIRTY}' != '' ]  ; then \
 				echo '[CHANGED] ${GIT_DIRTY}'; \
