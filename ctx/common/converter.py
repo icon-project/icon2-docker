@@ -128,7 +128,6 @@ class UpdateType:
             if level == "info" and hasattr(self.logger, "info"):
                 self.logger.info(message_text)
             elif level == "error" and hasattr(self.logger, "error"):
-                print("error----")
                 self.logger.error(message_text)
             elif level == "warn" and hasattr(self.logger, "warn"):
                 self.logger.warn(message_text)

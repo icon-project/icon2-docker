@@ -13,7 +13,7 @@ class InitManager:
     def __init__(self, ):
         self.cfg = CFG() # Configure
         if self.cfg.base_env['ONLY_GOLOOP'] is False:
-            self.cs = CS() # ConfigureSetter
+            self.cs = CS()# ConfigureSetter
 
     def run(self, ):
         self.print_banner()
@@ -62,9 +62,9 @@ class InitManager:
 
     def print_resources(self):
         try:
-            self.cfg.logger.info(f"[Resources] System Information: {resources.get_platform_info()}")
-            self.cfg.logger.info(f"[Resources] Memory Information: {resources.get_mem_info()} MB")
-            self.cfg.logger.info(f"[Resources] rlimit Information: {resources.get_rlimit_nofile()}")
+            self.cfg.logger.info(f"[RESOURCES] System Information: {resources.get_platform_info()}")
+            self.cfg.logger.info(f"[RESOURCES] Memory Information: {resources.get_mem_info(unit='GB')}")
+            self.cfg.logger.info(f"[RESOURCES] rlimit Information: {resources.get_rlimit_nofile()}")
         except Exception as e:
             self.cfg.logger.error(f"get resource error - {e}")
 
