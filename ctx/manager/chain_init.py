@@ -147,15 +147,16 @@ class ChainInit:
             self.get_my_info()
 
         self.cfg.logger.info("-"*100)
-        if not self.config.get('SEEDS'):
-            self.get_seeds()
-        self.cfg.logger.info(f"[CC] Starter: SEEDS={self.config.get('SEEDS')}")
         if self.config.get('FASTEST_START') is True:
             self.cfg.logger.info(f"[CC] START {self.ctl.get_state()}, FASTEST_START={self.config['FASTEST_START']}")
             self.set_configure(wait_state=True)
             self.cfg.logger.info(f"[CC] ICON2 DB after migration")
             self.ctl.start()
         else:
+            if not self.config.get('SEEDS'):
+                self.cfg.logger.error(f"Please check the SEEDS (Now={self.config.get('SEEDS')})")
+                sys.exit(127)
+            self.cfg.logger.info(f"[CC] Starter: SEEDS={self.config.get('SEEDS')}")
             res = self.ctl.get_state()
             if isinstance(res, dict) and res.get('cid', None) is None:
                 network_name = self.config.get('SERVICE')
