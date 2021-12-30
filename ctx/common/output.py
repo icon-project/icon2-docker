@@ -15,6 +15,7 @@ from termcolor import cprint
 from common import converter, base
 from config.configure import Configure as CFG
 import getpass
+import yaml
 
 cfg = CFG()
 
@@ -120,6 +121,11 @@ def open_file(filename):
         raise
 
 
+def open_yaml_file(filename):
+    read_yaml = open_file(filename)
+    return yaml.load(read_yaml, Loader=yaml.FullLoader)
+
+
 def write_file(filename, data, option='w', permit='664'):
     with open(filename, option) as outfile:
         outfile.write(data)
@@ -174,7 +180,7 @@ def dump(obj, nested_level=0, output=sys.stdout, hex_to_int=False):
         print('%s]' % (def_spacing + (nested_level) * spacing), file=output)
     else:
         if hex_to_int and converter.is_hex(obj):
-            print(bcolors.WARNING + '%s%s' % (def_spacing + nested_level * spacing, str(round(int(obj, 16)/10**18, 8)) + bcolors.ENDC))
+            print(bcolors.WARNING + '%s%s' % (def_spacing + nested_level * spacing, str(round(int(obj, 16) / 10 ** 18, 8)) + bcolors.ENDC))
         else:
             print(bcolors.WARNING + '%s%s' % (def_spacing + nested_level * spacing, obj) + bcolors.ENDC)
 
@@ -292,4 +298,3 @@ def send_slack(url, msg_text, title=None, send_user_name="CtxBot", msg_level='in
     except Exception as e:
         cfg.logger.error(f"[ERROR][Slack] Got errors -> {e}")
         return False
-

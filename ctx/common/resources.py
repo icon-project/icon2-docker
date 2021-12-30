@@ -1,5 +1,4 @@
 import resource
-import re
 import time
 import platform
 
@@ -52,14 +51,52 @@ def get_cpu_load():
         }
 
 
-def get_mem_info():
-    with open('/proc/meminfo') as f:
-        meminfo = f.read()
-        matched = re.search(r'^MemTotal:\s+(\d+)', meminfo)
-        if matched:
-            mem_total_kb = int(matched.groups()[0])
-            mem_total_mb = int(mem_total_kb / 1024)
-            return mem_total_mb
+def get_mem_info(unit="GB"):
+    """
+    Read in the /proc/meminfo and return a dictionary of the memory and swap
+    usage for all processes.
+    """
+
+    if unit == "MB":
+        convert_unit = 1000
+    elif unit == "GB":
+        convert_unit = 1000 * 1000
+    else:
+        convert_unit = 1
+        unit = "KB"
+
+    data = {'mem_total': 0, 'mem_used': 0, 'mem_free': 0,
+            'swap_total': 0, 'swap_used': 0, 'swap_free': 0,
+            'buffers': 0, 'cached': 0}
+
+    with open('/proc/meminfo', 'r') as fh:
+        lines = fh.read()
+        fh.close()
+
+        for line in lines.split('\n'):
+            fields = line.split(None, 2)
+            if fields[0] == 'MemTotal:':
+                data['mem_total'] = int(fields[1], 10)
+            elif fields[0] == 'MemFree:':
+                data['mem_free'] = int(fields[1], 10)
+            elif fields[0] == 'Buffers:':
+                data['buffers'] = int(fields[1], 10)
+            elif fields[0] == 'Cached:':
+                data['cached'] = int(fields[1], 10)
+            elif fields[0] == 'SwapTotal:':
+                data['swap_total'] = int(fields[1], 10)
+            elif fields[0] == 'SwapFree:':
+                data['swap_free'] = int(fields[1], 10)
+                break
+        data['mem_used'] = data['mem_total'] - data['mem_free']
+        data['swap_used'] = data['swap_total'] - data['swap_free']
+
+        for k, v in data.items():
+            if isinstance(v, int):
+                data[k] = round(v / convert_unit, 2)
+        data['unit'] = unit
+
+    return data
 
 
 def get_cpu_time():

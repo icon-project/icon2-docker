@@ -13,7 +13,6 @@ from ping3 import ping
 
 from config.configure import Configure as CFG
 from common.output import send_slack
-from common.base import run_execute
 
 
 class NodeChecker:
@@ -22,7 +21,7 @@ class NodeChecker:
         self.pc = PeerChecker()
         self.cfg = CFG(use_file=use_file)
         self.config = self.cfg.config
-        self.unix_socket = self.config['settings']['icon2'].get("GOLOOP_NODE_SOCK", "/goloop/data/cli.sock")
+        self.unix_socket = self.config.get("GOLOOP_NODE_SOCK", "/goloop/data/cli.sock")
         self.ctl = socket_request.ControlChain(unix_socket=self.unix_socket)
         self.cfg.logger = self.cfg.get_logger('health.log')
 
@@ -42,7 +41,7 @@ class NodeChecker:
     def check_up_seeds(self, _p2p_port: int, _rpc_port: int):
         p2p_rs = list()
         rpc_rs = list()
-        peer_ip_list = [addr.split(':')[0] for addr in self.config['settings']['env'].get('SEEDS').split(',')]
+        peer_ip_list = [addr.split(':')[0] for addr in self.config.get('SEEDS').split(',')]
         with futures.ThreadPoolExecutor() as executor:
             p2p_results = [
                 executor.submit(self.oc.port, friend.split(':')[0], _p2p_port)
@@ -64,36 +63,33 @@ class NodeChecker:
         _block = [0, 0]
         _peer_stack = 0
         _block_stack = 0
-        _stack_limit = int(self.config['settings']['env'].get(
-            'CHECK_STACK_LIMIT',
-            self.config['settings']['env']['COMPOSE_ENV'].get('CHECK_STACK_LIMIT')
-        ))
-        _p2p_port = int(self.config['settings']['icon2'].get('GOLOOP_P2P_LISTEN', '8080').split(':')[-1])
-        _rpc_port = int(self.config['settings']['icon2'].get('GOLOOP_RPC_ADDR', '9080').split(':')[-1])
+        _stack_limit = int(self.config.get('CHECK_STACK_LIMIT'))
+        _p2p_port = int(self.config.get('GOLOOP_P2P_LISTEN', '8080').split(':')[-1])
+        _rpc_port = int(self.config.get('GOLOOP_RPC_ADDR', '9080').split(':')[-1])
         _endpoint = '/admin/chain/icon_dex'
-        _check_peer_stack = self.config['settings']['env']['COMPOSE_ENV'].get('CHECK_PEER_STACK', 6)
-        _check_block_stack = self.config['settings']['env']['COMPOSE_ENV'].get('CHECK_BLOCK_STACK', 10)
-        _check_interval = self.config['settings']['env']['COMPOSE_ENV'].get('CHECK_INTERVAL', 10)
-        _check_timeout = self.config['settings']['env']['COMPOSE_ENV'].get('CHECK_TIMEOUT', 10)
+        _check_peer_stack = self.config.get('CHECK_PEER_STACK', 6)
+        _check_block_stack = self.config.get('CHECK_BLOCK_STACK', 10)
+        _check_interval = self.config.get('CHECK_INTERVAL', 10)
+        _check_timeout = self.config.get('CHECK_TIMEOUT', 10)
         while True:
-            peer_rs = self.pc.peer_status(f"http://{node_ip}:{_rpc_port}{_endpoint}", self.config['settings']['env'].get('CHECK_TIMEOUT', _check_timeout))
+            peer_rs = self.pc.peer_status(f"http://{node_ip}:{_rpc_port}{_endpoint}", self.config.get('CHECK_TIMEOUT', _check_timeout))
             if not peer_rs:
                 _peer_stack += 1
-                if not _peer_stack % self.config['settings']['env'].get('CHECK_PEER_STACK', _check_peer_stack):
-                    self.cfg.logger.error(f"Node API=Failed,stack_count={_peer_stack},Time={int(_peer_stack) * int(self.config['settings']['env'].get('CHECK_PEER_STACK', _check_peer_stack))} sec)")
-                    if self.config['settings']['env'].get('SLACK_WH_URL'):
-                        send_slack(self.config['settings']['env']['SLACK_WH_URL'],
-                                   self.result_formatter(f"Node API response=Failed,Stack count={_peer_stack},Time={int(_peer_stack) * int(self.config['settings']['env'].get('CHECK_PEER_STACK', _check_peer_stack))} sec)"),
+                if not _peer_stack % self.config.get('CHECK_PEER_STACK', _check_peer_stack):
+                    self.cfg.logger.error(f"Node API=Failed,stack_count={_peer_stack},Time={int(_peer_stack) * int(self.config.get('CHECK_PEER_STACK', _check_peer_stack))} sec)")
+                    if self.config.get('SLACK_WH_URL'):
+                        send_slack(self.config['SLACK_WH_URL'],
+                                   self.result_formatter(f"Node API response=Failed,Stack count={_peer_stack},Time={int(_peer_stack) * int(self.config.get('CHECK_PEER_STACK', _check_peer_stack))} sec)"),
                                    'Node health',
                                    msg_level='error'
                                    )
             else:
                 self.cfg.logger.info(f"Node API response={self.get_peer_goloop(peer_rs)}")
-                if _peer_stack >= self.config['settings']['env'].get('CHECK_PEER_STACK', _check_peer_stack):
-                    self.cfg.logger.info(f"Node API=OK,stack_count={_peer_stack},Time={int(_peer_stack) * int(self.config['settings']['env'].get('CHECK_PEER_STACK', _check_peer_stack))} sec)")
-                    if self.config['settings']['env'].get('SLACK_WH_URL'):
-                        send_slack(self.config['settings']['env']['SLACK_WH_URL'],
-                                   self.result_formatter(f"Node API response=OK,Stack count={_peer_stack},Time={int(_peer_stack) * int(self.config['settings']['env'].get('CHECK_PEER_STACK', _check_peer_stack))} sec)"),
+                if _peer_stack >= self.config.get('CHECK_PEER_STACK', _check_peer_stack):
+                    self.cfg.logger.info(f"Node API=OK,stack_count={_peer_stack},Time={int(_peer_stack) * int(self.config.get('CHECK_PEER_STACK', _check_peer_stack))} sec)")
+                    if self.config.get('SLACK_WH_URL'):
+                        send_slack(self.config['SLACK_WH_URL'],
+                                   self.result_formatter(f"Node API response=OK,Stack count={_peer_stack},Time={int(_peer_stack) * int(self.config.get('CHECK_PEER_STACK', _check_peer_stack))} sec)"),
                                    'Node health',
                                    msg_level='info'
                                    )
@@ -101,26 +97,26 @@ class NodeChecker:
                 _block[-1] = peer_rs.get('height', 0)
                 if _block[-1] <= _block[0]:
                     _block_stack += 1
-                    if not _block_stack % self.config['settings']['env'].get('CHECK_BLOCK_STACK', _check_block_stack):
+                    if not _block_stack % self.config.get('CHECK_BLOCK_STACK', _check_block_stack):
                         self.cfg.logger.error(f"Node block_sync=Failed,stack_count={_block_stack},block_height={_block[-1]})")
-                        if self.config['settings']['env'].get('SLACK_WH_URL'):
-                            if self.config['settings']['env'].get('CHECK_SEEDS'):
+                        if self.config.get('SLACK_WH_URL'):
+                            if self.config.get('CHECK_SEEDS'):
                                 p2p_rs, rpc_rs = self.check_up_seeds(_p2p_port, _rpc_port)
                                 if p2p_rs:
                                     self.cfg.logger.warning(f"Node check_up_seeds(p2p)={p2p_rs}")
                                 if rpc_rs:
                                     self.cfg.logger.warning(f"Node check_up_seeds(rpc)={rpc_rs}")
-                            send_slack(self.config['settings']['env']['SLACK_WH_URL'],
+                            send_slack(self.config['SLACK_WH_URL'],
                                        self.result_formatter(f"Node block_sync=Failed,stack_count={_block_stack},block_height={_block[-1]})"),
                                        'Node block',
                                        msg_level='error'
                                        )
                     _block[0] = _block[-1]
                 else:
-                    if _block_stack >= self.config['settings']['env'].get('CHECK_BLOCK_STACK', _check_block_stack):
+                    if _block_stack >= self.config.get('CHECK_BLOCK_STACK', _check_block_stack):
                         self.cfg.logger.info(f"Node block_sync=OK,stack_count={_block_stack},block_height={_block[-1]})")
-                        if self.config['settings']['env'].get('SLACK_WH_URL'):
-                            send_slack(self.config['settings']['env']['SLACK_WH_URL'],
+                        if self.config.get('SLACK_WH_URL'):
+                            send_slack(self.config['SLACK_WH_URL'],
                                        self.result_formatter(f"Node block_sync=OK,Stack count={_block_stack},Block={_block[-1]})"),
                                        'Node block',
                                        msg_level='info'
@@ -130,7 +126,7 @@ class NodeChecker:
             if _peer_stack >= _stack_limit or _block_stack >= _stack_limit:
                 self.cfg.logger.error("Node stack_limit over.")
                 sys.exit(127)
-            await asyncio.sleep(self.config['settings']['env'].get('CHECK_TIMEOUT', _check_interval))
+            await asyncio.sleep(self.config.get('CHECK_TIMEOUT', _check_interval))
 
     def run(self, ):
         self.check_node()

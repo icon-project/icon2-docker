@@ -68,7 +68,7 @@ def load_local_yaml(file_path):
     Exception
         if theres an issue loading file. """
     with open(file_path) as fin:
-        content = yaml.load(fin, Loader=yaml.FullLoader)
+        content = yaml.safe_load(fin)
     return content
 
 

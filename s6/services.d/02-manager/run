@@ -1,6 +1,11 @@
 #!/usr/bin/with-contenv bash
-source /ctx/bin/functions.sh
+if [[ "$ONLY_GOLOOP" ]]; then
+    while [ 1 ]; do
+      sleep 3;
+    done
+else
+    source /ctx/bin/functions.sh
+    logging "Start ICON2 Manager - ${BASE_DIR}, ${GOLOOP_NODE_SOCK}, ${LOGDIR}, ${BOOTING_LOG}"
+    python3 /ctx/main.py
+fi
 
-logging "Start ICON2 Manager - ${BASE_DIR}, ${GOLOOP_NODE_SOCK}, ${LOGDIR}, ${BOOTING_LOG}"
-
-python3 /ctx/main.py

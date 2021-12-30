@@ -1,0 +1,266 @@
+only_golop: false
+reference:
+  env:
+    AUTO_SEEDS:
+      default: false
+      type: bool
+    BASE_DIR:
+      default: /goloop
+      type: str
+    CC_DEBUG:
+      default: false
+      type: bool
+    CHECK_BLOCK_STACK:
+      default: 10
+      type: int
+    CHECK_INTERVAL:
+      default: 10
+      type: int
+    CHECK_PEER_STACK:
+      default: 6
+      type: int
+    CHECK_STACK_LIMIT:
+      default: 360
+      type: int
+    CHECK_TIMEOUT:
+      default: 10
+      type: int
+    CID:
+      default: '0x1'
+      type: str
+    CONFIG_LOCAL_FILE:
+      default: /goloop/configure.yml
+      type: str
+    CONFIG_URL:
+      default: https://networkinfo.solidwallet.io/icon2
+      type: str
+    CONFIG_URL_FILE:
+      default: default_configure.yml
+      type: str
+    DOCKER_LOG_FILES:
+      default: chain.log,health.log,error.log,debug.log
+      type: str
+    DOCKER_LOG_STDOUT:
+      default: false
+      type: bool
+    DOWNLOAD_FORCE:
+      default: true
+      type: bool
+    DOWNLOAD_TOOL:
+      default: aria2c
+      type: str
+    DOWNLOAD_URL:
+      default: https://networkinfo.solidwallet.io/info
+      type: url
+    DOWNLOAD_URL_TYPE:
+      default: indexing
+      type: str
+    ENDPOINT:
+      default: https://preps.net.solidwallet.io
+      type: str
+    FASTEST_START:
+      default: false
+      type: bool
+    IS_AUTOGEN_CERT:
+      default: false
+      type: bool
+    IS_MIGRATION:
+      default: false
+      type: bool
+    KEY_PASSWORD:
+      default: password123!@#
+      type: str
+    KEY_RESET:
+      default: false
+      type: bool
+    KEY_STORE_FILENAME:
+      default: keystore.json
+      type: str
+    LOGDIR:
+      default: /goloop/logs
+      type: str
+    LOGFILE:
+      default: /goloop/logs/goloop.log
+      type: str
+    LOGROTATE_DATE:
+      default: 14
+      type: int
+    LOGROTATE_SIZE:
+      default: 1G
+      type: str
+    LOG_OUTPUT_TYPE:
+      default: file
+      type: str
+    MAIN_RETRY_COUNT:
+      default: 200
+      type: int
+    MAIN_TIME_OUT:
+      default: 30
+      type: int
+    MAIN_TIME_SLEEP:
+      default: 1
+      type: int
+    MIGRATION_START:
+      default: false
+      type: bool
+    MIG_INFO_FILE:
+      default: migration_configure.yml
+      type: str
+    NID:
+      default: '0x1'
+      type: str
+    NTP_REFRESH_TIME:
+      default: 180
+      type: int
+    NTP_SERVER:
+      default: ''
+      type: str
+    NTP_SERVERS:
+      default: time.google.com,time.cloudflare.com,time.facebook.com,time.apple.com,time.euro.apple.com
+      type: str
+    RESTORE_PATH:
+      default: restore
+      type: str
+    ROLE:
+      default: 0
+      type: int
+    RPC_INCLUDE_DEBUG:
+      default: false
+      type: bool
+    SEEDS:
+      default: ''
+      type: str
+    SERVICE:
+      default: ''
+      type: str
+    SLACK_WH_URL:
+      default: ''
+      type: str
+  genesis:
+    default: ''
+    type: obj
+  icon2:
+    CPU_PROFILE:
+      default: /goloop/data/cpu.profile
+      type: str
+    GOLOOP_BACKUP_DIR:
+      default: /goloop/data/backup
+      type: str
+    GOLOOP_CONFIG:
+      default: /goloop/config/config.json
+      type: str
+    GOLOOP_CONSOLE_LEVEL:
+      default: debug
+      type: str
+    GOLOOP_EE_SOCKET:
+      default: /goloop/data/ee.sock
+      type: str
+    GOLOOP_ENGINES:
+      default: python
+      type: str
+    GOLOOP_KEY_PLUGIN:
+      default: ''
+      type: str
+    GOLOOP_KEY_PLUGIN_OPTIONS:
+      default: ''
+      type: str
+    GOLOOP_KEY_SECRET:
+      default: /goloop/config/keysecret
+      type: str
+    GOLOOP_KEY_STORE:
+      default: /goloop/config/keystore.json
+      type: str
+    GOLOOP_LICENSE_FILE:
+      default: /goloop/config/license.json
+      type: str
+    GOLOOP_LOG_FORWARDER_ADDRESS:
+      default: ''
+      type: str
+    GOLOOP_LOG_FORWARDER_LEVEL:
+      default: ''
+      type: str
+    GOLOOP_LOG_FORWARDER_NAME:
+      default: ''
+      type: str
+    GOLOOP_LOG_FORWARDER_VENDOR:
+      default: ''
+      type: str
+    GOLOOP_LOG_LEVEL:
+      default: debug
+      type: str
+    GOLOOP_LOG_WRITER_COMPRESS:
+      default: false
+      type: bool
+    GOLOOP_LOG_WRITER_FILENAME:
+      default: /goloop/logs/goloop.log
+      type: str
+    GOLOOP_LOG_WRITER_LOCALTIME:
+      default: false
+      type: bool
+    GOLOOP_LOG_WRITER_MAXAGE:
+      default: 0
+      type: int
+    GOLOOP_LOG_WRITER_MAXBACKUPS:
+      default: 0
+      type: int
+    GOLOOP_LOG_WRITER_MAXSIZE:
+      default: 100
+      type: int
+    GOLOOP_NODE_DIR:
+      default: /goloop/data
+      type: str
+    GOLOOP_NODE_SOCK:
+      default: /goloop/data/cli.sock
+      type: str
+    GOLOOP_P2P:
+      default: 127.0.0.1:8080
+      type: ip_port
+    GOLOOP_P2P_LISTEN:
+      default: :8080
+      type: port
+    GOLOOP_RPC_ADDR:
+      default: :9080
+      type: port
+    GOLOOP_RPC_DUMP:
+      default: false
+      type: bool
+    MEM_PROFILE:
+      default: /goloop/data/mem.profile
+      type: str
+  iiss:
+    default: ''
+    type: obj
+required:
+  env: true
+  genesis: true
+  icon2: false
+  iiss: false
+settings:
+  env:
+    CID: null
+    ENDPOINT: null
+    NID: null
+    SERVICE: MainNet
+    GOLOOP_P2P: "sdsdsd.com:sdsd:sdsd"
+  genesis:
+    accounts:
+    - address: hx54f7853dc6481b670caf69c5a27c7c8fe5be8269
+      balance: '0x2961fff8ca4a62327800000'
+      name: god
+    - address: hx1000000000000000000000000000000000000000
+      balance: '0x0'
+      name: treasury
+    message: "A rhizome has no beginning or end; it is always in the middle, between\
+      \ things, interbeing, intermezzo. The tree is filiation, but the rhizome is\
+      \ alliance, uniquely alliance. The tree imposes the verb \"to be\" but the fabric\
+      \ of the rhizome is the conjunction, \"and ... and ...and...\"This conjunction\
+      \ carries enough force to shake and uproot the verb \"to be.\" Where are you\
+      \ going? Where are you coming from? What are you heading for? These are totally\
+      \ useless questions.\n\n - Mille Plateaux, Gilles Deleuze & Felix Guattari\n\
+      \n\"Hyperconnect the world\""
+  genesis_json: /goloop/config/genesis.json
+  genesis_storage: /goloop/config/icon_genesis.zip
+  icon2: null
+  iiss: ''
+  iiss_json: /goloop/icon_config.json
+version: v1.0.0

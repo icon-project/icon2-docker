@@ -2,15 +2,11 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
-
 import append_parent_path
+import yaml
 
-from config.configure import Configure
-from common import converter, output, base
-from common.output import cprint, converter
-
+from common import converter
 from devtools import debug
-
 
 dict_values = dict(
     none_value=None,
@@ -41,97 +37,57 @@ class GetDict(dict):
         self.value = value
         super().__init__()
 
-    # def get(self, item, default_value):
-    #     # print(item, default_value)
-    #     if item is None:
-    #         return default_value
-    #     else:
-    #         print(dict)
-    #         print(self.value.get(item))
-    #         return item
 
-    # def __getattr__(self, item):
-    #
-    #     if super().__getitem__(item) is None:
-    #         print(item)
-    #
-    #     return super().__getitem__(item)
-    #
-    # def __setattr__(self, item, value):
-    #     return super().__setitem__(item, value)
+def check_func(update_type, values, required_type, key=None):
+    print(f"\n####### {required_type} Test #######")
+    for value in values:
+        res = update_type.check_value_type(value, required_type, key)
+        print(f"input = {value:<8}, result = {res}")
 
 
-aaa = GetDict(dict_values)
-
+print(f"----- Not allow None test -----")
 for key, value in dict_values.items():
     print(f"key = {key} , value = {GetDict(dict_values).get(key, 'default')}")
 
-print("-"*100)
-print("UpdateType")
 
+print(f"----- UpdateType test -----")
+with open('default_configure.yml') as f:
+    conf = yaml.load(f, Loader=yaml.FullLoader)
+    update_type = converter.UpdateType(config=conf)
+    check_func(update_type=update_type, values=['yes', 'true', 't', 'y', '1', 'True', 'TRUE', True], required_type="bool")
+    check_func(update_type=update_type, values=['no', 'false', 'f', 'n', '0', 'False', 'FALSE', False], required_type="bool")
+    check_func(
+        update_type=update_type,
+        values=["http://www.com", "http://dsdsd.com", "http://222.222.2.2:23223", "sdsd:2223", "www.hsdsd.com"],
+        required_type="url",
+        key="URL"
+    )
 
-class UpdateType:
-    def __init__(self, defines=None):
-        self.defines = defines
+    check_func(
+        update_type=update_type,
+        values=["202.10.1.1", "0.0.0.0", "422.222.2.2:23223", ":2223", ":dfd", ":sdsd:sdsds", "sdsd,2323", "222.222.2:2222"],
+        required_type="port"
+    )
 
-    def run(self):
-        for key, value in self.defines.items():
+    check_func(
+        update_type=update_type,
+        values=["202.10.1.1", "0.0.0.0", "222.222.2.2:23223", ":2223", "localhost:123", "dssd.com:2323", "aaaa:2323", "__Sdsd___"],
+        required_type="ip_port"
+    )
 
-            result = self.check_value_type(key, value)
-            print(key, value, result)
-        pass
+    check_func(
+        update_type=update_type,
+        values=["1", 3, "333", "2222", 45242422, "22"],
+        required_type="int"
+    )
 
-    def str2bool(v):
-        true_list = ("yes", "true", "t", "1", "True", "TRUE")
-        if type(v) == bool:
-            return v
-        if type(v) == str:
-            return v.lower() in true_list
-        return eval(f"{v}") in true_list
+    updated_values = converter.UpdateType(config=conf).check()
+    debug(updated_values)
 
-    def check_value_type(self, key, value):
-        if self.defines.get(key) == "str":
-            return_value = str(value)
-        elif self.defines.get(key) == "int":
-            return_value = int(value)
-        elif self.defines.get(key) == "float":
-            return_value = float(value)
-        elif self.defines.get(key) == "bool":
-            return_value = self.str2bool(value)
-        elif self.defines.get(key) == "array":
-            return_value = str(value).split(",")
-        elif self.defines.get(key) == "list":
-            return_value = str(value).split(",")
-        else:
-            return_value = value
-        return return_value
-
-
-default_arguments_type = {
-    "hostname": {
-        "type": "test_machine",
-        "default": "20.20.3.70",
-    },
-    "default__timeout": {
-        "type": "int",
-        "default": 3
-    },
-    "default__db_type": {
-        "type": "string",
-        "default": "influxdb_v2",
-    },
-}
-
-
-default_set = {
-    "hostname": "string",
-    "integer":  "int",
-    "float":  "float",
-    "boolean":  "boolean",
-    "array": "arr1,arr2,arr3"
-}
-
-
-UpdateType(defines=default_set).run()
-
+    # print("---"*100)
+    # from common.converter import UpdateType
+    # with open('/ctx/tests/default_configure.yml') as f:
+    #     conf = yaml.load(f, Loader=yaml.FullLoader)
+    #     UpdateType(config=conf, logger=self.logger).check()
+    #     print("**"*100)
 
