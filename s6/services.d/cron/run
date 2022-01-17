@@ -1,8 +1,14 @@
 #!/usr/bin/with-contenv bash
 
-export $(cat /goloop/.env)
+if [[ ! "$ONLY_GOLOOP" ]]; then
+    export $(cat /goloop/.env)
 
-gomplate -f /ctx/tmpl/logrotate-goloop.tmpl -o /etc/logrotate.d/goloop
-echo -e "0\t0\t*\t*\t*\tlogrotate -f /etc/logrotate.d/goloop" > /etc/crontabs/root
+    gomplate -f /ctx/tmpl/logrotate-goloop.tmpl -o /etc/logrotate.d/goloop
+    echo -e "0\t0\t*\t*\t*\tlogrotate -f /etc/logrotate.d/goloop" > /etc/crontabs/root
 
-exec crond -f -L /var/log/cron.log
+    exec crond -f -L /var/log/cron.log
+else
+    while [ 1 ]; do
+      sleep 3;
+    done
+fi

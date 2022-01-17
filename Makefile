@@ -1,6 +1,6 @@
 REPO_HUB = iconloop
 NAME = icon2-node
-VERSION = v1.0.10
+VERSION = v1.1.3
 NTP_VERSION = ntp-4.2.8p15
 IS_LOCAL = true
 BASE_IMAGE = goloop-icon
@@ -44,10 +44,11 @@ ifeq ($(MAKECMDGOALS) , bash)
 #	MIGRATION_START="true"
 #	MIG_DB="true"
 	NTP_REFRESH_TIME:="30"
-	MAIN_TIME_OUT:="1"
+	MAIN_TIME_OUT:="30"
 	ROLE:=0
 	GOLOOP_CONSOLE_LEVEL:="trace"
 	GOLOOP_LOG_LEVEL:="trace"
+	LOG_OUTPUT_TYPE:="console"
 #	GOLOOP_NODE_SOCK:="/goloop/cli.sock"
 #	GOLOOP_EE_SOCKET:="/goloop/ee.sock"
 
@@ -143,7 +144,7 @@ change_version:
 
 		$(call colorecho, "-- Change Goloop Version ${VERSION} --")
 		@git submodule update --init --recursive --remote;
-		@cd $(GOLOOP_PATH) && git checkout $(VERSION);
+		@cd $(GOLOOP_PATH) && git fetch origin --tags && git checkout $(VERSION);
 
 		@if [ '${GIT_DIRTY}' != '' ]  ; then \
 				echo '[CHANGED] ${GIT_DIRTY}'; \
@@ -209,7 +210,7 @@ tag_latest: print_version
 bash: make_debug_mode print_version
 	docker run  $(shell cat DEBUG_ARGS) -p 9000:9000 -p 7100:7100 -it -v $(PWD)/config:/goloop/config -v ${PWD}/s6:/s6-int \
 		-v $(PWD)/logs:/goloop/logs -v $(PWD)/ctx:/ctx -v $(PWD)/data:/goloop/data -e VERSION=$(TAGNAME) -v $(PWD)/src:/src --entrypoint /bin/bash \
-		--name $(NAME) --cap-add SYS_TIME --network host --rm $(REPO_HUB)/$(NAME):$(TAGNAME)
+		--name $(NAME) --cap-add SYS_TIME --rm $(REPO_HUB)/$(NAME):$(TAGNAME)
 
 
 f_bash: make_debug_mode print_version

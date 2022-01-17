@@ -12,7 +12,7 @@ import os
 def main():
     cfg = CFG()
     cfg.get_config(True)
-    cfg_config = cfg.config['settings']['icon2']
+    cfg_config = cfg.config
 
     parser = argparse.ArgumentParser(prog='icon_wallet')
     parser.add_argument('command', choices=["create", "get", "convert"])

@@ -2,11 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-import yaml
-import time
 import requests
-
-from termcolor import cprint
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.configure import Configure as CFG
@@ -19,13 +15,13 @@ class ConfigureSetter:
     def __init__(self, ):
         self.cfg = CFG(use_file=False)
         self.config = self.cfg.config
-        self.base_dir = self.config['settings']['env'].get('BASE_DIR')
+        self.base_dir = self.config.get('BASE_DIR')
         self.config_dir = f"{self.base_dir}/config"
 
     def make_base_dir(self, ):
         for node_dir in [self.base_dir,
                          f"{self.base_dir}/config",
-                         f"{self.config['settings']['icon2']['GOLOOP_NODE_DIR']}",
+                         f"{self.config['GOLOOP_NODE_DIR']}",
                          f"{self.base_dir}/logs"
                          ]:
             if not os.path.exists(node_dir):
@@ -44,15 +40,15 @@ class ConfigureSetter:
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         if not os.path.exists(self.base_dir):
             self.make_base_dir()
-        keysecret_passwd = self.config['settings']['env'].get('KEY_PASSWORD', self.config['settings']['env']['COMPOSE_ENV'].get('KEY_PASSWORD'))
-        keysecret_filename = self.config['settings']['icon2'].get('GOLOOP_KEY_SECRET', '/goloop/config/keysecret')
-        keystore_filename = self.config['settings']['env'].get('KEY_STORE_FILENAME', None)
+        keysecret_passwd = self.config.get('KEY_PASSWORD')
+        keysecret_filename = self.config.get('GOLOOP_KEY_SECRET', '/goloop/config/keysecret')
+        keystore_filename = self.config.get('KEY_STORE_FILENAME', None)
 
         if keystore_filename is None:
-            keystore_filename = self.config['settings']['icon2'].get('GOLOOP_KEY_STORE', 'keystore.json').split('/')[-1]
+            keystore_filename = self.config.get('GOLOOP_KEY_STORE', 'keystore.json').split('/')[-1]
 
-        if is_file(f"{self.config_dir}/{keystore_filename}") is False or self.config['settings']['env'].get('KEY_RESET', False) is True:
-            if self.cfg.config['settings']['env'].get('IS_AUTOGEN_CERT') is True:
+        if is_file(f"{self.config_dir}/{keystore_filename}") is False or self.config.get('KEY_RESET', False) is True:
+            if self.cfg.config.get('IS_AUTOGEN_CERT') is True:
                 wallet = WalletLoader(f"{self.config_dir}/{keystore_filename}", keysecret_passwd, keysecret_filename, force_sync=True)
                 wallet.create_wallet()
                 write_file(f'{keysecret_filename}', keysecret_passwd)
@@ -68,18 +64,18 @@ class ConfigureSetter:
     def create_genesis_json(self, ):
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         rs = write_json(
-            f"{self.config['settings'].get('genesis_json', '/goloop/config/genesis.json')}",
-            self.config['settings'].get('genesis')
+            f"{self.config.get('GENESIS_JSON', '/goloop/config/genesis.json')}",
+            self.config.get('GENESIS')
         )
         self.cfg.logger.info(f"{rs}")
 
     def create_gs_zip(self, ):
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
-        genesis_file = f'{self.config["settings"]["env"]["CONFIG_URL"]}/{self.config["settings"]["env"]["SERVICE"]}/icon_genesis.zip'
+        genesis_file = f'{self.config.get("CONFIG_URL")}/{self.config.get("SERVICE")}/icon_genesis.zip'
         res = requests.get(genesis_file)
         if res.status_code == 200:
             rs = write_file(
-                f"{self.config['settings'].get('genesis_storage', '/goloop/config/icon_genesis.zip')}",
+                f"{self.config.get('GENESIS_STORAGE', '/goloop/config/icon_genesis.zip')}",
                 res.content,
                 option='wb'
             )
@@ -89,17 +85,17 @@ class ConfigureSetter:
 
     def create_icon_config(self, ):
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
-        if self.config['settings'].get('iiss'):
+        if self.config.get('IISS'):
             rs = write_json(
-                f"{self.config['settings'].get('iiss_json', f'/goloop/icon_config.json')}",
-                self.config['settings'].get('iiss')
+                f"{self.config.get('IISS_JSON', f'/goloop/icon_config.json')}",
+                self.config.get('IISS')
             )
             self.cfg.logger.info(f"{rs}")
 
     def create_yaml_file(self, file_name=None):
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         if file_name is None:
-            file_name = f"{os.path.join(self.base_dir, self.config['settings']['env'].get('CONFIG_LOCAL_FILE', 'configure.yml'))}"
+            file_name = f"{os.path.join(self.base_dir, self.config.get('CONFIG_LOCAL_FILE', 'configure.yml'))}"
         rs = write_yaml(
             file_name,
             self.config
@@ -110,54 +106,43 @@ class ConfigureSetter:
         file_name = f"{os.path.join(self.base_dir, file_name)}"
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         with open(file_name, 'w') as env:
-            for key, val in self.config['settings']['env'].items():
-                if key in ["COMPOSE_ENV", "KEY_PASSWORD", "KEY_SECRET"]:
+            for key, val in self.config.items():
+                if key in ["KEY_PASSWORD", "KEY_SECRET"]:
                     continue
-                if val is not None:
-                    env.write(f"{key}={val}\n")
-
-            for key, val in self.config['settings']['icon2'].items():
+                if isinstance(val, dict) or isinstance(val, list):
+                    continue
                 if val is not None:
                     env.write(f"{key}={val}\n")
 
     def create_db(self, ):
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
-        time.sleep(self.config['settings']['mig'].get('MIG_REST_TIME', 5))
         self.cfg.logger.info(f"[RESTORE] "
-                             f"FASTEST_START = {self.config['settings']['env'].get('FASTEST_START')}, "
-                             f"MIG_DB = {self.config['settings']['mig'].get('MIG_DB')}"
+                             f"FASTEST_START = {self.config.get('FASTEST_START')}"
                              )
-        if self.config['settings']['env'].get('FASTEST_START') is True:
-            if self.config['settings']['mig'].get('MIG_DB') is True:
-                self.cfg.logger.info(f"[RESTORE] DOWNLOAD from Migration Stage2 DB")
-            else:
-                self.cfg.logger.info(f"[RESTORE] DOWNLOAD from ICON2 DB")
+        if self.config.get('FASTEST_START') is True:
+            self.cfg.logger.info(f"[RESTORE] DOWNLOAD from ICON2 DB")
             self.downloader()
 
         else:
             self.cfg.logger.info(f"[PASS] Ignore DB download")
 
     def downloader(self, ):
-        icon2_config = self.config['settings']['icon2']
-        env_config = self.config['settings']['env']
-        compose_env_config = self.config['settings']['env']['COMPOSE_ENV']
-
-        base_dir = compose_env_config['BASE_DIR']
+        base_dir = self.config.get('BASE_DIR')
 
         # Goloop DB PATH
-        if icon2_config.get('GOLOOP_NODE_DIR') :
-            db_path = icon2_config['GOLOOP_NODE_DIR']
+        if self.config.get('GOLOOP_NODE_DIR') :
+            db_path = self.config['GOLOOP_NODE_DIR']
         else:
             default_db_path = 'data'
             db_path = os.path.join(base_dir, default_db_path)
 
-        service = env_config['SERVICE'] if env_config.get('SERVICE') else compose_env_config['SERVICE']
-        restore_path = f"{db_path}/{env_config['RESTORE_PATH'] if env_config.get('RESTORE_PATH') else compose_env_config['RESTORE_PATH']}"
-        download_force = env_config['DOWNLOAD_FORCE'] if env_config.get('DOWNLOAD_FORCE') else compose_env_config['DOWNLOAD_FORCE']
-        download_tool = env_config['DOWNLOAD_TOOL'] if env_config.get('DOWNLOAD_TOOL') else compose_env_config['DOWNLOAD_TOOL']
+        service = self.config['SERVICE']
+        restore_path = f"{db_path}/{self.config['RESTORE_PATH']}"
+        download_force = self.config['DOWNLOAD_FORCE']
+        download_tool = self.config['DOWNLOAD_TOOL']
 
-        download_url = env_config['DOWNLOAD_URL'] if env_config.get('DOWNLOAD_URL') else compose_env_config['DOWNLOAD_URL']
-        download_url_type = env_config['DOWNLOAD_URL_TYPE'] if env_config.get('DOWNLOAD_URL_TYPE') else compose_env_config['DOWNLOAD_URL_TYPE']
+        download_url = self.config['DOWNLOAD_URL']
+        download_url_type = self.config['DOWNLOAD_URL_TYPE']
 
         Restore(
             db_path=db_path,
@@ -171,13 +156,13 @@ class ConfigureSetter:
 
     def run(self, ):
         dump(self.config)
-        self.config['settings']['env']['BASE_DIR'] = os.getcwd()
-        self.config['settings']['env']['CONFIG_LOCAL_FILE'] = f'configure.yml'
-        self.config['settings']['icon2']['GOLOOP_KEY_SECRET'] = f'keysecret'
-        self.config['settings']['icon2']['GOLOOP_KEY_STORE'] = f'keystore.json'
-        self.config['settings']['genesis_json'] = f'genesis.json'
-        self.config['settings']['genesis_storage'] = f'gs.zip'
-        self.config['settings']['iiss_json'] = f'icon_config.json'
+        self.config['BASE_DIR'] = os.getcwd()
+        self.config['CONFIG_LOCAL_FILE'] = f'configure.yml'
+        self.config['GOLOOP_KEY_SECRET'] = f'keysecret'
+        self.config['GOLOOP_KEY_STORE'] = f'keystore.json'
+        self.config['GENESIS_JSON'] = f'genesis.json'
+        self.config['GENESIS_STORAGE'] = f'gs.zip'
+        self.config['IISS_JSON'] = f'icon_config.json'
         self.create_yaml_file()
         self.create_env_file('.env')
         self.make_base_dir()

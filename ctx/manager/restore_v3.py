@@ -146,7 +146,7 @@ class Restore:
         self.cpu_count = os.cpu_count()
         self.used_disk_max_percent = 70
 
-        self.env = self.cfg.config['settings']['env']
+        self.env = self.cfg.config
         self.base_log_dir = f"{self.env['BASE_DIR']}/logs"
         if self.env.get('CC_DEBUG'):
             self.debug = self.env['CC_DEBUG']
@@ -305,9 +305,9 @@ class Restore:
         completed_msg = f"[RESTORE] Completed downloading. elapsed_time={elapsed_time}s, {converter.format_seconds_to_hhmmss(run_elapsed)}"
         self.cfg.logger.info(completed_msg)
         try:
-            if self.config['settings']['env'].get('SLACK_WH_URL', None):
+            if self.config.get('SLACK_WH_URL', None):
                 output.send_slack(
-                    url=self.config['settings']['env']['SLACK_WH_URL'],
+                    url=self.config['SLACK_WH_URL'],
                     msg_text=self.result_formatter(completed_msg),
                     title='Restore',
                     msg_level='error'
@@ -677,26 +677,31 @@ def main():
        > icon2
            - "GOLOOP_NODE_DIR" : "/goloop/data"
     '''
-    icon2_config = config['settings']['icon2']
-    env_config = config['settings']['env']
-    compose_env_config = config['settings']['env']['COMPOSE_ENV']
+    icon2_config = config
 
     # Goloop DB PATH
     if icon2_config.get('GOLOOP_NODE_DIR'):
         db_path = icon2_config['GOLOOP_NODE_DIR']
     else:
         default_db_path = 'data'
-        base_dir = compose_env_config['BASE_DIR']
+        # base_dir = compose_env_config['BASE_DIR']
+        base_dir = icon2_config['BASE_DIR']
         db_path = os.path.join(base_dir, default_db_path)
 
     # Restore Options
     # network  =  MainNet | SejongNet ....
-    network = env_config['SERVICE'] if env_config.get('SERVICE') else compose_env_config['SERVICE']
-    restore_path = env_config['RESTORE_PATH'] if env_config.get('RESTORE_PATH') else compose_env_config['RESTORE_PATH']
-    dl_force = env_config['DOWNLOAD_FORCE'] if env_config.get('DOWNLOAD_FORCE') else compose_env_config['DOWNLOAD_FORCE']
-    download_tool = env_config['DOWNLOAD_TOOL'] if env_config.get('DOWNLOAD_TOOL') else compose_env_config['DOWNLOAD_TOOL']
-    download_url = env_config['DOWNLOAD_URL'] if env_config.get('DOWNLOAD_URL') else compose_env_config['DOWNLOAD_URL']
-    download_url_type = env_config['DOWNLOAD_URL_TYPE'] if env_config.get('DOWNLOAD_URL_TYPE') else compose_env_config['DOWNLOAD_URL_TYPE']
+    # network = env_config['SERVICE'] if env_config.get('SERVICE') else compose_env_config['SERVICE']
+    # restore_path = env_config['RESTORE_PATH'] if env_config.get('RESTORE_PATH') else compose_env_config['RESTORE_PATH']
+    # dl_force = env_config['DOWNLOAD_FORCE'] if env_config.get('DOWNLOAD_FORCE') else compose_env_config['DOWNLOAD_FORCE']
+    # download_tool = env_config['DOWNLOAD_TOOL'] if env_config.get('DOWNLOAD_TOOL') else compose_env_config['DOWNLOAD_TOOL']
+    # download_url = env_config['DOWNLOAD_URL'] if env_config.get('DOWNLOAD_URL') else compose_env_config['DOWNLOAD_URL']
+    # download_url_type = env_config['DOWNLOAD_URL_TYPE'] if env_config.get('DOWNLOAD_URL_TYPE') else compose_env_config['DOWNLOAD_URL_TYPE']
+    network = icon2_config['SERVICE']
+    restore_path = icon2_config['RESTORE_PATH']
+    dl_force = icon2_config['DOWNLOAD_FORCE']
+    download_tool = icon2_config['DOWNLOAD_TOOL']
+    download_url = icon2_config['DOWNLOAD_URL']
+    download_url_type = icon2_config['DOWNLOAD_URL_TYPE']
 
     ## Test path
     # db_path = "/app/goloop/data2"

@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
+import sys
 import json
 import yaml
 import requests
 import socket
-from datetime import datetime
 
-# try:
-#     from ..common.logger import CustomLog as CL
-# except:
 from common.logger import CustomLog as CL
 from common import converter
 from termcolor import cprint
-import sys
 
 
 def get_local_ip():
@@ -48,14 +44,15 @@ class Configure:
             "GOLOOP_BACKUP_DIR": "backup",
             "GOLOOP_EE_SOCKET": "ee.sock",
             "GOLOOP_NODE_SOCK": "cli.sock",
-            "CPU_PROFILE": "cpu.profile",
-            "MEM_PROFILE": "mem.profile"
+            "GOLOOP_CPUPROFILE": "cpu.profile",
+            "GOLOOP_MEMPROFILE": "mem.profile"
         }
-        self.compose_env = self._compose_env()
-        self.log_dir = f"{self.compose_env['BASE_DIR']}/logs"
+        self.base_env = self._base_env()
+        self.log_dir = f"{self.base_env['BASE_DIR']}/logs"
         if not os.path.isdir(self.log_dir):
             os.mkdir(self.log_dir)
-
+        if self.base_env['ONLY_GOLOOP'] is True:
+            return
         self.loggers = {'booting.log': self.init_logger('booting.log', log_level='debug', log_stdout=True)}
         self.logger = self.get_logger('booting.log')
         self.get_config(use_file)
@@ -77,7 +74,7 @@ class Configure:
     def init_logger(self, log_file=None, log_level='debug', log_stdout=False):
         logger = CL(log_file.upper())
         logger.set_level(log_level.upper())
-        if log_stdout or self.config['settings']['env']['COMPOSE_ENV'].get('DOCKER_LOG_STDOUT', False) is True:
+        if log_stdout or self.config.get('DOCKER_LOG_STDOUT', False) is True:
             logger.stream_handler(log_level.upper())
         logger.time_rotate_handler(
             filename=f"{self.log_dir}/{log_file}",
@@ -88,77 +85,72 @@ class Configure:
         logger.set_level(log_level.upper())
         return logger
 
-    def _compose_env(self, ):
+    def _base_env(self, ):
         temp_env = dict()
-        temp_env['CONFIG_URL'] = os.getenv('CONFIG_URL', 'https://networkinfo.solidwallet.io/icon2')
+        temp_env['CONFIG_URL'] = os.getenv('CONFIG_URL', 'https://networkinfo.solidwallet.io/node_info')
         temp_env['SERVICE'] = os.getenv('SERVICE', 'MainNet')
         temp_env['CONFIG_URL_FILE'] = os.getenv('CONFIG_URL_FILE', 'default_configure.yml')
         temp_env['CONFIG_LOCAL_FILE'] = os.getenv('CONFIG_LOCAL_FILE', '/goloop/configure.yml')
         temp_env['LOCAL_TEST'] = converter.str2bool(os.getenv('LOCAL_TEST', False))
         temp_env['BASE_DIR'] = os.getenv('BASE_DIR', '/goloop')
+        temp_env['ONLY_GOLOOP'] = converter.str2bool(os.getenv('ONLY_GOLOOP', False))
         return temp_env
 
     def get_config(self, use_file):
-        service_url = f'{self.compose_env["CONFIG_URL"]}/{self.compose_env["SERVICE"]}'
-        res = requests.get(f'{service_url}/{self.compose_env["CONFIG_URL_FILE"]}')
+        service_url = f'{self.base_env["CONFIG_URL"]}/{self.base_env["SERVICE"]}'
 
-        if os.path.exists(self.compose_env['CONFIG_LOCAL_FILE']) or use_file:
+        if os.path.exists(self.base_env['CONFIG_LOCAL_FILE']) or use_file:
             self.logger.info(f"Load config_from_file")
             self.config_from_file()
         else:
             self.logger.info(f"Download new configuration")
+            res = requests.get(f'{service_url}/{self.base_env["CONFIG_URL_FILE"]}')
             if res.status_code == 200:
-                self.config = yaml.load(res.text, Loader=yaml.FullLoader)
+                self.config = yaml.safe_load(res.text)
                 if self.config.get('settings') and self.config['settings'].get('env'):
-                    for compose_env in self.config['settings']['env'].get('COMPOSE_ENV', {}).keys():
+                    for compose_env in self.config['reference'].get('env').keys():
                         if os.getenv(compose_env):
                             self.config['settings']['env'][compose_env] = self.get_os_env(compose_env)
                         else:
                             pass
-                    self.config['settings']['env'].update(self.compose_env)
-                    self.config['settings']['icon2'] = dict()
-                    for icon2_env in self.config['reference'].get('icon2_default').keys():
-                        if self.config['settings']['icon2'].get(icon2_env, None) is None:
-                            self.config['settings']['icon2'][icon2_env] = self.get_os_env(icon2_env)
-                    self.set_second_env(self.config['settings']['icon2']['GOLOOP_NODE_DIR'])
+                    self.config['settings']['env'].update(self.base_env)
+                    # [icon2]
+                    icon2_envs = [env for env in self.config['reference'].get('env').keys() if env.startswith("GOLOOP")]
+                    for icon2_env in icon2_envs:
+                        self.config['settings']['env'][icon2_env] = self.get_os_env(icon2_env)
+                    self.config['settings']['env']['GOLOOP_NODE_DIR'] = os.path.join(self.base_env['BASE_DIR'], 'data')
+                    self.set_second_env(self.config['settings']['env']['GOLOOP_NODE_DIR'])
+                    # [keystore]
                     key_store_filename = self.config['settings']['env'].get("KEY_STORE_FILENAME", None)
                     if key_store_filename:
-                        self.config['settings']['icon2']['GOLOOP_KEY_STORE'] = f"{self.config['settings']['env']['BASE_DIR']}/config/{key_store_filename}"
+                        self.config['settings']['env']['GOLOOP_KEY_STORE'] = f"{self.config['settings']['env']['BASE_DIR']}/config/{key_store_filename}"
                     else:
-                        self.config['settings']['icon2']['GOLOOP_KEY_STORE'] = os.getenv('GOLOOP_KEY_STORE')
-                    if self.config['settings']['env'].get('GOLOOP_P2P'):
-                        self.config['settings']['icon2']['GOLOOP_P2P'] = self.config['settings']['env']['GOLOOP_P2P']
-                    elif self.compose_env['LOCAL_TEST'] is True:
+                        self.config['settings']['env']['GOLOOP_KEY_STORE'] = os.getenv('GOLOOP_KEY_STORE')
+                    # [network]
+                    if self.base_env['LOCAL_TEST'] is True:
                         private_ip = get_local_ip()
-                        port = self.config['settings']['icon2'].get('GOLOOP_P2P_LISTEN', ':8080').split(':')[-1]
-                        self.config['settings']['icon2']['GOLOOP_P2P'] = f"{private_ip}:{port}"
-                        # self.logger.info(f"[LOCAL_TEST] GOLOOP_P2P = \"{private_ip}:{port}\"")
+                        port = self.config['settings']['env'].get('GOLOOP_P2P_LISTEN', ':8080').split(':')[-1]
+                        self.config['settings']['env']['GOLOOP_P2P'] = f"{private_ip}:{port}"
                     else:
-                        public_ip = requests.get('http://checkip.amazonaws.com').text.strip()
-                        port = self.config['settings']['icon2'].get('GOLOOP_P2P_LISTEN', ':8080').split(':')[-1]
-                        self.config['settings']['icon2']['GOLOOP_P2P'] = f"{public_ip}:{port}"
-                        # self.logger.info(f"[PUBLIC] GOLOOP_P2P = \"{public_ip}:{port}\"")
-                        self.compose_env.pop('LOCAL_TEST')
+                        if os.getenv('GOLOOP_P2P') and os.getenv('GOLOOP_P2P') != '127.0.0.1:8080':
+                            self.config['settings']['env']['GOLOOP_P2P'] = os.getenv('GOLOOP_P2P')
+                        else:
+                            public_ip = requests.get('http://checkip.amazonaws.com').text.strip()
+                            port = self.config['settings']['env'].get('GOLOOP_P2P_LISTEN', ':8080').split(':')[-1]
+                            self.config['settings']['env']['GOLOOP_P2P'] = f"{public_ip}:{port}"
+                    self.base_env.pop('LOCAL_TEST')
                 else:
                     self.logger.error('No env.')
             else:
-                self.logger.error(f'API status code is {res.status_code}. ({service_url}/{self.compose_env["CONFIG_URL_FILE"]})')
-        mig_info_file = self.config['settings']['env'].get('MIG_INFO_FILE', 'migration_configure.yml')
-        mig_info_data_url = f"{service_url}/{mig_info_file}"
-        res = requests.get(mig_info_data_url)
-        if res.status_code == 200:
-            self.config['settings']['mig'] = yaml.load(res.text, Loader=yaml.FullLoader)
-        for mig_key in self.config['settings']['mig'].keys():
-            if os.getenv(mig_key):
-                self.config['settings']['mig'][mig_key] = self.get_os_env(mig_key)
-        # self.logger.info(f"Initializing Configure\n{json.dumps(self.config['settings'], indent=4)}")
+                self.logger.error(f'API status code is {res.status_code}. ({service_url}/{self.base_env["CONFIG_URL_FILE"]})')
+            self.config = converter.UpdateType(self.config, self.logger).check()
 
     def set_second_env(self, dir_name):
         for env_key, env_val in self.second_env_dict.items():
             if os.getenv(env_key) is not None:
-                self.config['settings']['icon2'][env_key] = os.getenv(env_key)
+                self.config['settings']['env'][env_key] = os.getenv(env_key)
             else:
-                self.config['settings']['icon2'][env_key] = f"{os.path.join(dir_name, env_val)}"
+                self.config['settings']['env'][env_key] = f"{os.path.join(dir_name, env_val)}"
 
     def get_os_env(self, env_key):
         if os.getenv(env_key) and os.getenv(env_key).lower() in ['true', 'false']:
@@ -171,10 +163,10 @@ class Configure:
 
     def config_from_file(self, ):
         try:
-            base_dir = self.compose_env.get('BASE_DIR', '/goloop')
-            file_name = f"{os.path.join(base_dir, self.compose_env.get('CONFIG_LOCAL_FILE', 'configure.yml'))}"
+            base_dir = self.base_env.get('BASE_DIR', '/goloop')
+            file_name = f"{os.path.join(base_dir, self.base_env.get('CONFIG_LOCAL_FILE', 'configure.yml'))}"
             with open(file_name, 'r') as js:
-                self.config = yaml.load(js, Loader=yaml.FullLoader)
+                self.config = yaml.safe_load(js)
         except FileNotFoundError as e:
             print(e)
 

@@ -121,9 +121,11 @@ The directories(data, config, icon, logs …) are created by docker engine, but 
 | FASTEST_START      | false                  | bool | false    | Download snapshot DB                                                             |
 | KEY_STORE_FILENAME | keystore.json          | str  | true     | keystore.json file name                                                          |
 | KEY_PASSWORD       |                        | str  | true     | password of keystore.json file                                                   |
-| NTP_SERVER         |                        |      |          | NTP Server                                                                       |
+| USE_NTP_SYNC       | True                   | bool | false    | Whether to use NTP in container                                                                       |
+| NTP_SERVER         |                        | str  | false    | NTP Server                                                                       |
 | NTP_REFRESH_TIME   |                        | int  | false    | ntp refresh time                                                                 |
 | SLACK_WH_URL       |                        | str  | false    | slack web hook url - If a problem occurs, you can receive an alarm with a slack. |
+| USE_HEALTH_CHECK   | True                   | bool | false    | Whether to use health check                                                      |
 | CHECK_TIMEOUT      | 10                     | int  | false    | sec - TIMEOUT when calling REST API for monitoring                               |
 | CHECK_PEER_STACK   | 6                      | int  | false    | sec - Stack value to check the peer for monitoring.                              |
 | CHECK_BLOCK_STACK  | 10                     | int  | false    | sec - Stack value to check the block for monitoring.                             |
