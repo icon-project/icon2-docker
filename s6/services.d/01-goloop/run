@@ -1,5 +1,6 @@
 #!/usr/bin/with-contenv bash
 
+source /ctx/bin/functions.sh
 function goloop_server_save(){
     if [[ "${GOLOOP_CONFIG}" != "" && ! -f "${GOLOOP_CONFIG}" ]]; then
         UNSET="GOLOOP_CONFIG"
