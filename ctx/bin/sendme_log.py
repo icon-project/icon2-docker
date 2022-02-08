@@ -395,8 +395,8 @@ if __name__ == '__main__':
     print(args)
     cfg = CFG()
     if args.log_dir is None and base.is_docker():
-        log_dir = f"{cfg.compose_env.get('BASE_DIR', '/goloop')}/logs"
-        network = cfg.compose_env['SERVICE']
+        log_dir = f"{cfg.config.get('BASE_DIR', '/goloop')}/logs"
+        network = cfg.config.get('SERVICE')
     else:
         log_dir = args.log_dir
         network = args.network

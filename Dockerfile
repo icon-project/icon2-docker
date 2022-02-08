@@ -32,17 +32,17 @@ ENV IS_DOCKER=true \
 
 RUN apk update && \
     apk add --no-cache bash vim tree nmap git ncurses curl gomplate logrotate aria2 jq&& \
-    python -m pip install --upgrade pip
+    python -m pip install --no-cache-dir --upgrade pip
 
 ADD https://github.com/just-containers/s6-overlay/releases/download/v2.2.0.3/s6-overlay-amd64-installer /tmp/
 RUN chmod +x /tmp/s6-overlay-amd64-installer && /tmp/s6-overlay-amd64-installer /
 
-ADD src/ntpdate /usr/sbin/ntpdate
-ADD ctx /ctx
-ADD s6 /etc/
+COPY src/ntpdate /usr/sbin/ntpdate
+COPY ctx /ctx
+COPY s6 /etc/
 
 RUN if [ "${IS_NTP_BUILD}" == "true" ]; then \
-        wget http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/${NTP_VERSION}.tar.gz && \
+        wget --progress=dot:giga http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/${NTP_VERSION}.tar.gz && \
         tar -xzf ${NTP_VERSION}.tar.gz && \
         cd ${NTP_VERSION} && \
         ./configure && \

@@ -27,7 +27,7 @@ def main():
     dirname, file_name = os.path.split(args.filename)
 
     if base.is_docker() and dirname == "":
-        config_dir = f"{cfg.config['settings']['env'].get('BASE_DIR', '/goloop')}/config"
+        config_dir = f"{cfg.config.get('BASE_DIR', '/goloop')}/config"
         keystore_filename = f"{config_dir}/{args.filename}"
     else:
         config_dir = None

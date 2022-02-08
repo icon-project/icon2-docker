@@ -6,6 +6,7 @@ IS_LOCAL = true
 BASE_IMAGE = goloop-icon
 IS_NTP_BUILD = false
 GOLOOP_PATH = goloop
+GOLOOP_BUILD_CMD = "goloop-icon-image"
 
 ifdef version
 VERSION = $(version)
@@ -119,7 +120,7 @@ make_build_args:
 		 )
 
 test:   make_build_args print_version
-	shellcheck -S error src/entrypoint.sh
+	#shellcheck -S error src/entrypoint.sh
 	$(foreach TEST_FILE, $(TEST_FILES), \
 		container-structure-test test --driver docker --image $(REPO_HUB)/$(NAME):$(TAGNAME) \
 		--config $(TEST_FILE) || exit 1 ;\
@@ -161,7 +162,7 @@ check-and-reinit-submodules:
 
 build_goloop_base: make_build_args change_version
 		$(call colorecho, "-- Build goloop base image --")
-		cd $(GOLOOP_PATH) && $(MAKE) goloop-icon-image
+		cd $(GOLOOP_PATH) && $(MAKE) $(GOLOOP_BUILD_CMD)
 
 
 build: make_build_args

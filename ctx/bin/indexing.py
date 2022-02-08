@@ -10,8 +10,8 @@ from common import output, converter, base
 cfg = CFG()
 
 if base.is_docker():
-    data_dir = "/goloop/data"
-    checksum_file = "/goloop/data/restore/checksum.json"
+    data_dir = f"{cfg.config.get('BASE_DIR', '/goloop')}/data"
+    checksum_file = f"{data_dir}/restore/checksum.json"
 
 
 def download_write_file(url, path=None):
