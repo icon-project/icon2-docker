@@ -31,3 +31,5 @@ DEBUG_ARGS
 
 logs/
 icon/
+
+ctx/tests/goloop/*

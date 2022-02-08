@@ -1,0 +1,6 @@
+#WEB configure test
+commandTests:
+  - name: "WEB Config URL"
+    command: ""
+    args: ""
+    expectedOutput: [ "" ]
