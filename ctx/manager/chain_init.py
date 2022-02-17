@@ -147,7 +147,6 @@ class ChainInit:
         if int(self.config.get('ROLE')) == 3:
             self.get_my_info()
 
-        self.cfg.logger.info("-" * 100)
         if self.config.get('FASTEST_START') is True:
             self.cfg.logger.info(f"[CC] START {self.ctl.get_state()}, FASTEST_START={self.config['FASTEST_START']}")
             self.set_configure(wait_state=True)
@@ -202,13 +201,12 @@ class ChainInit:
                     self.cfg.logger.info(f"set {system_key} => {system_value}")
 
             if new_system_config:
-                self.cfg.logger.info(f"[before] system_config = {system_config}")
+                self.cfg.logger.info(f"[CC][before] system_config = {system_config}")
                 res = self.ctl.system_config(payload=new_system_config)
-                self.cfg.logger.info(f"[after] system_config = {res}")
+                self.cfg.logger.info(f"[CC][after] system_config = {res}")
 
         except Exception as e:
-            self.cfg.logger.error(f"Set system config {e}")
-            pass
+            self.cfg.logger.error(f"[CC] Set system config :: {e}")
 
         if rs.get('state') == 'started':
             self.cfg.logger.info(f"[CC] STATE [{rs.get('state')}]")
