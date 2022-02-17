@@ -6,9 +6,27 @@ IS_LOCAL = true
 BASE_IMAGE = goloop-icon
 IS_NTP_BUILD = false
 GOLOOP_PATH = goloop
+DEBUG = false
+
+ifeq ($(DEBUG), true)
+	VERBOSE_OPTION = -v
+else
+	VERBOSE_OPTION =
+endif
+
+ifeq ($(debug), true)
+	VERBOSE_OPTION = -v
+	DEBUG = true
+else
+	VERBOSE_OPTION =
+endif
 
 ifdef version
 VERSION = $(version)
+endif
+
+ifdef service
+SERVICE = $(service)
 endif
 
 ifdef VERSION_ARG
@@ -34,7 +52,7 @@ ifeq ($(MAKECMDGOALS) , bash)
 	DOWNLOAD_URL_TYPE:="indexing"
 #	SEEDS:="20.20.6.86:7100"
 #	AUTO_SEEDS:=True
-	SERVICE:="MainNet"
+	SERVICE:=MainNet
 #	CC_DEBUG:="true"
 	IS_AUTOGEN_CERT:=true
     PRIVATE_KEY_FILENAME:="YOUR_KEYSTORE_FILENAME.der"
@@ -70,10 +88,17 @@ ifeq ($(UNAME_S),Darwin)
 	SED_OPTION = ''
 endif
 
-NO_COLOR=\033[0m
-OK_COLOR=\033[32m
-ERROR_COLOR=\033[31m
-WARN_COLOR=\033[93m
+ifeq ($(USE_COLOR), false)
+	NO_COLOR=
+	OK_COLOR=
+	ERROR_COLOR=
+	WARN_COLOR=
+else
+	NO_COLOR=\033[0m
+	OK_COLOR=\033[32m
+	ERROR_COLOR=\033[31m
+	WARN_COLOR=\033[93m
+endif
 
 TEST_FILES := $(shell find tests -name '*.yml')
 
@@ -119,11 +144,8 @@ make_build_args:
 		 )
 
 test:   make_build_args print_version
-	shellcheck -S error src/entrypoint.sh
-	$(foreach TEST_FILE, $(TEST_FILES), \
-		container-structure-test test --driver docker --image $(REPO_HUB)/$(NAME):$(TAGNAME) \
-		--config $(TEST_FILE) || exit 1 ;\
-	)
+	python3 ./tests/test_*.py $(VERBOSE_OPTION)
+
 
 changeconfig: make_build_args
 		@CONTAINER_ID=$(shell docker run -d $(REPO_HUB)/$(NAME):$(TAGNAME)) ;\
