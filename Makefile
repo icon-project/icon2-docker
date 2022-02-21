@@ -20,6 +20,7 @@ ifeq ($(debug), true)
 else
 	VERBOSE_OPTION =
 endif
+GOLOOP_BUILD_CMD = "goloop-icon-image"
 
 ifdef version
 VERSION = $(version)
@@ -146,7 +147,6 @@ make_build_args:
 test:   make_build_args print_version
 	python3 ./tests/test_*.py $(VERBOSE_OPTION)
 
-
 changeconfig: make_build_args
 		@CONTAINER_ID=$(shell docker run -d $(REPO_HUB)/$(NAME):$(TAGNAME)) ;\
 		 echo "COPY TO [$$CONTAINER_ID]" ;\
@@ -183,7 +183,7 @@ check-and-reinit-submodules:
 
 build_goloop_base: make_build_args change_version
 		$(call colorecho, "-- Build goloop base image --")
-		cd $(GOLOOP_PATH) && $(MAKE) goloop-icon-image
+		cd $(GOLOOP_PATH) && $(MAKE) $(GOLOOP_BUILD_CMD)
 
 
 build: make_build_args
