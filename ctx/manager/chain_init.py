@@ -1,5 +1,6 @@
 #!/usr/bin/with-contenv python3
 # -*- coding: utf-8 -*-
+import os
 import sys
 import time
 import socket_request
@@ -44,7 +45,7 @@ class ChainInit:
         if res.get('error'):
             self.cfg.logger.error(f"get_preps() {res.get('error')}")
         else:
-            preps_addr = [prep['nodeAddress']for prep in res['result']['preps']]
+            preps_addr = [prep['nodeAddress'] for prep in res['result']['preps']]
             inspect = get_inspect(
                 self.config.get('ENDPOINT'),
                 self.config['CID']
@@ -146,7 +147,6 @@ class ChainInit:
         if int(self.config.get('ROLE')) == 3:
             self.get_my_info()
 
-        self.cfg.logger.info("-"*100)
         if self.config.get('FASTEST_START') is True:
             self.cfg.logger.info(f"[CC] START {self.ctl.get_state()}, FASTEST_START={self.config['FASTEST_START']}")
             self.set_configure(wait_state=True)
@@ -175,7 +175,7 @@ class ChainInit:
 
                 if network_name == "MainNet":
                     v1_proof_file = "/ctx/mainnet_v1_block_proof/block_v1_proof.bin"
-                    mainnet_data_dir = f"{self.config['settings']['icon2']['GOLOOP_NODE_DIR']}/1"
+                    mainnet_data_dir = f"{self.config.get('GOLOOP_NODE_DIR')}/1"
                     self.cfg.logger.info(f"[CC] Copy {v1_proof_file} to {mainnet_data_dir}")
                     try:
                         copy2(v1_proof_file, f"{mainnet_data_dir}/")
@@ -189,6 +189,25 @@ class ChainInit:
             self.cfg.logger.info(f"[CC] START {self.ctl.get_state()}")
             self.ctl.start()
         rs = self.ctl.get_state()
+
+        try:
+            # system_config = ["rpcIncludeDebug", "rpcBatchLimit", "rpcDefaultChannel", "eeInstances"]
+            system_config = self.ctl.view_system_config().get("config")
+            new_system_config = {}
+            for system_key, value in system_config.items():
+                if os.getenv(system_key) and str(value).lower() != os.getenv(system_key):
+                    system_value = os.getenv(system_key)
+                    new_system_config[system_key] = system_value
+                    self.cfg.logger.info(f"set {system_key} => {system_value}")
+
+            if new_system_config:
+                self.cfg.logger.info(f"[CC][before] system_config = {system_config}")
+                res = self.ctl.system_config(payload=new_system_config)
+                self.cfg.logger.info(f"[CC][after] system_config = {res}")
+
+        except Exception as e:
+            self.cfg.logger.error(f"[CC] Set system config :: {e}")
+
         if rs.get('state') == 'started':
             self.cfg.logger.info(f"[CC] STATE [{rs.get('state')}]")
         else:
