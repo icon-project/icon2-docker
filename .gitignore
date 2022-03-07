@@ -4,6 +4,7 @@ __pycache__/
 *.swp
 *.json
 *.tar.gz
+*.pyc
 
 .python-version
 .ipynb_checkpoints
@@ -31,3 +32,7 @@ DEBUG_ARGS
 
 logs/
 icon/
+
+ctx/tests/goloop/*
+
+tests/goloop*/*

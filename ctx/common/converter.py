@@ -197,6 +197,8 @@ def todaydate(date_type=None):
         return '%s' % datetime.now().strftime("%Y%m%d")
     elif date_type == "file":
         return '%s' % datetime.now().strftime("%Y%m%d_%H%M")
+    elif date_type == "time":
+        return '%s' % datetime.now().strftime("%H:%M:%S.%f")[:-3]
     elif date_type == "hour":
         return '%s' % datetime.now().strftime("%H%M")
     elif date_type == "ms":

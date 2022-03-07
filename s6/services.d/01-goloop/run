@@ -1,31 +1,27 @@
 #!/usr/bin/with-contenv bash
+source /ctx/bin/functions.sh
+source /goloop/venv/bin/activate
 
 function goloop_server_save(){
     if [[ "${GOLOOP_CONFIG}" != "" && ! -f "${GOLOOP_CONFIG}" ]]; then
         UNSET="GOLOOP_CONFIG"
         CMD="goloop server save ${GOLOOP_CONFIG}"
-        logging "generate ${GOLOOP_CONFIG} - ${CMD}"
+        logging "Generate ${GOLOOP_CONFIG} - ${CMD}"
         bash -c "unset $UNSET ; $CMD 2>&1 | tee -a ${BOOTING_LOG}"
     fi
 }
 
-if [[ "$ONLY_GOLOOP" ]]; then
-    goloop_server_save;
-    source /goloop/venv/bin/activate
+cd ${BASE_DIR}
+goloop_server_save;
+
+if [[ "$ONLY_GOLOOP" == "True" || "$ONLY_GOLOOP" == "true" ]]; then
+    logging "Start ONLY_GOLOOP mode=${ONLY_GOLOOP}"
     goloop server start
     exit;
-else
-    if [[ -f "/goloop/.env" ]]; then
-        export $(cat /goloop/.env)
-    fi
-    source /ctx/bin/functions.sh
 fi
 
-goloop_server_save;
 logging "Start goloop server (${LOG_OUTPUT_TYPE}, ${BASE_DIR}, ${GOLOOP_CONFIG})"
 
-cd ${BASE_DIR}
-source /goloop/venv/bin/activate
 if [[ "$LOG_OUTPUT_TYPE" == "file" ]]; then
 #    goloop server start 2>&1 >> ${LOGFILE}
     goloop server start 2>> ${LOGFILE}
@@ -33,4 +29,8 @@ elif [[ "$LOG_OUTPUT_TYPE" == "debug" ]]; then
     goloop server start
 else
     goloop server start 2>&1 | tee -a ${LOGFILE}
+fi
+
+if [[ "$S" ]]; then
+    echo $S
 fi

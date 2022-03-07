@@ -1,0 +1,49 @@
+#Node Chacker Test
+schemaVersion: '2.0.0' # Make sure to test the latest schema version
+
+globalEnvVars:
+  - key: "CONFIG_URL"
+    value: "http://20.20.6.81:8888"
+
+  - key: "SERVICE"
+    value: "MainNet"
+
+  - key: "CONFIG_URL_FILE"
+    value: "default_configure.yml"
+
+  - key: "CONFIG_LOCAL_FILE"
+    value: "/goloop/configure.yml"
+
+  - key: "LOCAL_TEST"
+    value: "False"
+
+  - key: "IS_AUTOGEN_CERT"
+    value: "True"
+
+  - key: "BASE_DIR"
+    value: "/goloop"
+
+  - key: "ONLY_GOLOOP"
+    value: "False"
+
+  - key: "GOLOOP_P2P_LISTEN"
+    value: ":7100"
+
+  - key: "GOLOOP_RPC_ADDR"
+    value: ":9000"
+
+  - key: "DOCKER_LOG_FILES"
+    value: "chain.log,health.log,error.log,debug.log"
+
+  - key: "CHECK_STACK_LIMIT"
+    value: "1"
+
+commandTests:
+  - name: "Total test"
+#    setup: [["/init" ]]
+    command: "/init"
+
+#  - name: "Node Checker"
+#    command: "python3"
+#    args: ["/ctx/manager/node_checker.py"]
+#    exitCode: 127

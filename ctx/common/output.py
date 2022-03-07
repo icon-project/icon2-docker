@@ -218,7 +218,8 @@ def get_level_color(c_level):
 
 def slack_wh_send(self, text):
     payload = {"text": text}
-    requests.post(self.config['settings']['env']['SLACK_WH_URL'], json=payload, verify=False)
+    if self.config.get('SLACK_WH_URL'):
+        requests.post(self.config['SLACK_WH_URL'], json=payload, verify=False)
 
 
 # def exception_handler(exception_type, exception, traceback):
