@@ -1,6 +1,6 @@
 REPO_HUB = iconloop
 NAME = icon2-node
-VERSION = v1.1.3
+VERSION = v1.2.3
 NTP_VERSION = ntp-4.2.8p15
 IS_LOCAL = true
 BASE_IMAGE = goloop-icon
@@ -187,7 +187,7 @@ build_goloop_base: make_build_args change_version
 
 
 build: make_build_args
-		docker build $(DOCKER_BUILD_OPTION) -f Dockerfile \
+		docker buildx build --platform linux/amd64,linux/arm64  $(DOCKER_BUILD_OPTION) -f Dockerfile \
 			$(shell cat BUILD_ARGS) \
 			-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
 		docker rmi -f goloop-icon
