@@ -230,16 +230,22 @@ class Restore:
                     self.cfg.logger.error(f"[RESTORE][ERROR] {file}, {result}")
             # raise Exception(f"File checksum error")
 
+    @staticmethod
+    def _get_file_from_url(url):
+        file_name = url.split('/')[-1]
+        file_name = file_name.split('?')[0]
+        return file_name
+
     def _get_file_locate(self, url):
         full_path = None
         if url:
-            file_name = url.split('/')[-1]
+            file_name = self._get_file_from_url(url)
             full_path = f"{self.download_path}/{file_name}"
         return full_path
 
     def download_write_file(self, url, path=None):
         if url:
-            local_filename = url.split('/')[-1]
+            local_filename = self._get_file_from_url(url)
             if path:
                 full_path_filename = f"{path}/{local_filename}"
             else:
