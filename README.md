@@ -25,7 +25,6 @@ TCP 9000: JSON-RPC or RESTful API port serving application requests.P-Rep must a
 
 ## Getting started
 
-
 Open docker-compose.yml in a text editor and add the following content:
 
 ```yaml

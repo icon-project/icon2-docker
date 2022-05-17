@@ -187,7 +187,7 @@ build_goloop_base: make_build_args change_version
 
 
 build: make_build_args
-		docker buildx build --platform linux/amd64,linux/arm64  $(DOCKER_BUILD_OPTION) -f Dockerfile \
+		docker build $(DOCKER_BUILD_OPTION) -f Dockerfile \
 			$(shell cat BUILD_ARGS) \
 			-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
 		docker rmi -f goloop-icon
