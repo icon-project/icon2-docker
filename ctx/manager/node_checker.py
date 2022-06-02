@@ -124,7 +124,13 @@ class NodeChecker:
                     _block_stack = 0
                     _block[0] = _block[-1]
             if _peer_stack >= _stack_limit or _block_stack >= _stack_limit:
-                self.cfg.logger.error("Node stack_limit over.")
+                self.cfg.logger.error(f"Node stack_limit over. PEER STACK={_peer_stack}, BLOCK STACK={_block_stack}, Block={_block[-1]}")
+                if self.config.get('SLACK_WH_URL'):
+                    send_slack(self.config['SLACK_WH_URL'],
+                               self.result_formatter(f"Node stack_limit over. PEER STACK={_peer_stack}, BLOCK STACK={_block_stack}, Block={_block[-1]})"),
+                               'Node shutdown',
+                               msg_level='warning'
+                               )
                 sys.exit(127)
             await asyncio.sleep(self.config.get('CHECK_TIMEOUT', _check_interval))
 
