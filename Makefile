@@ -162,7 +162,7 @@ change_version:
 		$(call colorecho, "-- Change Goloop Version ${VERSION} --")
 
 		@if [ -e "$(GOLOOP_PATH)" ]; then \
-    		@rm -rf $(GOLOOP_PATH)
+    		@rm -rf $(GOLOOP_PATH); \
 		fi
 
 		@git submodule update --init --recursive --remote;
