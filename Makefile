@@ -122,7 +122,7 @@ make_debug_mode:
 				$(if  \
 					$(filter-out environment% default automatic, $(origin $V) ), \
 						$($V=$($V)) \
-					$(if $(filter-out "SHELL" "%_COLOR" "%_STRING" "MAKE%" "colorecho" ".DEFAULT_GOAL" "CURDIR" "TEST_FILES" "DOCKER_BUILD_OPTION" , "$V" ),  \
+					$(if $(filter-out "SHELL" "%_COLOR" "%_STRING" "MAKE%" "colorecho" ".DEFAULT_GOAL" "CURDIR" "TEST_FILES" "DOCKER_BUILD_OPTION" "GIT_DIRTY" , "$V" ),  \
 						$(shell echo $(ECHO_OPTION) '$(OK_COLOR)  $V = $(WARN_COLOR) $($V) $(NO_COLOR) ' >&2;) \
 						$(shell echo '-e $V=$($V)  ' >> DEBUG_ARGS)\
 					)\
@@ -161,10 +161,15 @@ changeconfig: make_build_args
 
 
 change_version:
-		@#$(call chdir, $(GOLOOP_PATH))
-		@#cd $(GOLOOP_PATH) && git checkout $(VERSION);
-
 		$(call colorecho, "-- Change Goloop Version ${VERSION} --")
+
+		@rm -f $(GOLOOP_PATH)/.git
+
+		@if [ -e "$(GOLOOP_PATH)/.git__" ]; then \
+			echo 'Recovery git file'; \
+			mv $(GOLOOP_PATH)/.git__ $(GOLOOP_PATH)/.git; \
+		fi
+
 		@git submodule update --init --recursive --remote;
 		@cd $(GOLOOP_PATH) && git fetch origin --tags && git checkout $(VERSION);
 
@@ -172,6 +177,7 @@ change_version:
 				echo '[CHANGED] ${GIT_DIRTY}'; \
 				git pull ;\
 		fi
+		@mv $(GOLOOP_PATH)/.git $(GOLOOP_PATH)/.git__
 
 
 check-and-reinit-submodules:
