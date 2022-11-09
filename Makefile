@@ -60,8 +60,6 @@ ifeq ($(MAKECMDGOALS) , bash)
     NGINX_THROTTLE_BY_IP_VAR:="\$$binary_remote_addr"
 	LOCAL_TEST:="true"
 #	FASTEST_START:="true"
-#	MIGRATION_START="true"
-#	MIG_DB="true"
 	NTP_REFRESH_TIME:="30"
 	MAIN_TIME_OUT:="30"
 	ROLE:=0
