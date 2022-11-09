@@ -1,17 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-import sys
+import append_parent_path
 import os
-
-parent_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-sys.path.append(parent_dir)
-sys.path.append(parent_dir+"/..")
-
 from config.configure import Configure as CFG
 from common import converter, output, base
 from common.output import cprint, converter
-
 from common.converter import region_info     ### regeion config
 # from manager import restore_hnsong as restore
 from manager.restore_v3 import Restore

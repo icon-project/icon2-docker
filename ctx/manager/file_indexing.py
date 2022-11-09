@@ -14,8 +14,8 @@ from itertools import zip_longest
 from termcolor import cprint
 
 
-def get_public_ip():
-    return requests.get("http://checkip.amazonaws.com").text.strip()
+# def get_public_ip():
+#     return requests.get("http://checkip.amazonaws.com").text.strip()
 
 
 def get_local_ip():
@@ -155,8 +155,6 @@ class FileIndexer:
         self.write_json(self.checksum_filename, self.indexed_file_dict)
 
     def set_result(self, file_path, key, value):
-        # self.result = {}
-
         if self.result['error'].get(file_path) is None:
             self.result['error'][file_path] = {}
 
@@ -239,7 +237,6 @@ class FileIndexer:
             if os.path.exists(filename):
                 print("[OK] Write json file -> %s, %s" % (filename, self.get_file_size(filename)))
         except:
-            # cprint(f"path not found {filename}", "red")
             print(f"[ERROR] can't write to json -> {filename}")
             raise
 

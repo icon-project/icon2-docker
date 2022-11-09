@@ -46,10 +46,6 @@ def line_info(return_type=None):
     # Call to Function name
     func_name = cf.f_back.f_code.co_name
 
-    # file name
-    # frame = inspect.stack()[1]
-    # module = inspect.getmodule(frame[0])
-
     if return_type == 'filename':
         result_info = f'{get_filename}'
     elif return_type == 'function' or return_type == 'func_name' or return_type == 'f_name':
@@ -113,12 +109,8 @@ class Restore:
         """
         self.cfg = Configure()
         self.config = self.cfg.config
-        # self.env = self.cfg.config
-        # self.base_log_dir = f"{self.env['BASE_DIR']}/logs"
-        # self.debug = self.env['CC_DEBUG'] if self.env.get('CC_DEBUG') else False
         self.base_log_dir = f"{self.config['BASE_DIR']}/logs"
         self.debug = self.config['CC_DEBUG'] if self.config.get('CC_DEBUG') else False
-        # self.cfg.logger = self.cfg.logger
 
         self.dl_dict = {}
         self.url_addr = None
@@ -140,7 +132,6 @@ class Restore:
 
         self.checksum_result = {}
 
-        # add by hnsong(2022.08.25)  >>>>>
         self.checksum_value = None
         self.fail_result = {}
         self.dl_url = None
@@ -148,7 +139,6 @@ class Restore:
         self.match_keyword = None
         self.region_info = None
         self.script_exit = False
-        # <<<<< add by hnsong(2022.08.25)
 
         if self.download_url_type == "indexing":
             self.download_url = download_url
@@ -163,7 +153,6 @@ class Restore:
 
         # Icon2 node DB Path check
         if self.db_path is None or not output.is_file(self.db_path):
-            # self.cfg.logger.error(f"[RESTORE] db_path not found - '{self.db_path}'")
             raise ValueError(f"[RESTORE] [ERROR] db_path not found - '{self.db_path}'")
 
         self.cpu_count = os.cpu_count()
@@ -177,14 +166,12 @@ class Restore:
         self.cfg.logger.info(f"[RESTORE] DOWNLOAD_URL={self.download_url}, SERVICE={self.network}, "
                              f"DOWNLOAD_URL_TYPE={self.download_url_type}, RESTORE_PATH={self.restore_path}")
 
-        # output.write_file(self.stored_local_path['restored_marks'], todaydate('ms'))
         self.download()
         self.check_downloaded_file()
 
         if self.checksum_result and self.checksum_result.get("status") == "FAIL":
             self.cfg.logger.info("[RESTORE] Try the one more downloading")
             self.create_db_redownload_list()   # add by hnsong (2022.08.25)
-            # modify by hnsong (2022.08.25) # self.download()
             self.download(redownload=True)
             self.check_downloaded_file()
 
@@ -224,21 +211,17 @@ class Restore:
 
         download_info_url = f"{self.download_url}/{self.network}.json"
         download_info_res = requests.get(download_info_url)
-
         if download_info_res.status_code == 200:
             download_info = download_info_res.json()
             self.cfg.logger.info(f"[RESTORE] index_url={download_info.get('index_url')}")
             self.cfg.logger.info(f"[RESTORE] checksum_url={download_info.get('checksum_url')}")
             for url_name in ["index_url", "checksum_url"]:
-                # self.file_download(download_url=download_info.get(url_name),
-                #                    download_path=self.download_path, hash_value="skip")
-                self.download_write_file(url=download_info.get(url_name), path=self.download_path)
+                self.download_write_file(url=download_info.get(url_name), path=self.restore_path)
                 self.stored_local_path[url_name] = self._get_file_locate(download_info.get(url_name))
         else:
             self.cfg.logger.error(f'[RESTORE] [ERROR] Invalid url or service name, url={download_info_res}, '
                                   f'status={download_info_res.status_code}')
 
-    # add by hnsong 2022.08.25
     def already_restore_check(self):
 
         restored_file = self.stored_local_path['restored_marks']
@@ -246,10 +229,8 @@ class Restore:
         check_stat = None
 
         if output.is_file(checksum_result_file):
-            # open file is checksum_result.json
             with open(checksum_result_file, 'r') as f:
                 check_stat = json.load(f)
-                # base.cprint(check_stat, 'red')
 
         if output.is_file(restored_file) and check_stat:
             if check_stat.get('state') == 'OK':
@@ -318,8 +299,6 @@ class Restore:
                                  f"status={self.checksum_result['status']}")
         else:
             if self.checksum_result.get("status") == "FAIL":
-                # base.cprint(self.checksum_result, 'green')
-                # for file, result in self.checksum_result.items():
                 for file, result in self.checksum_result.get('error').items():
                     if file != 'date':
                         url, output_path = self.get_file_url_info(file.replace("/data/", " ").split(' ')[-1])
@@ -330,11 +309,9 @@ class Restore:
                 if len(self.fail_result) > 0:
                     self.fail_result['date'] = self.checksum_result.get('error').get('date')
                     self.fail_result['state'] = False
-            # raise Exception(f"File checksum error")
         self.create_checksum_result(status=self.checksum_result.get('status'))
 
-    # add by hnsong 2022.08.25
-    def get_file_url_info(self, file_name):
+    def get_file_url_info(self, file_name: str = ""):
         """
         > The function takes in a file name and returns the download url and output path of the file
 
@@ -361,8 +338,7 @@ class Restore:
                     break
         return file_download_url, file_output_path
 
-    # add by hnsong 2022.08.25
-    def create_checksum_result(self, status="OK"):
+    def create_checksum_result(self, status: str = "OK"):
         """
         It creates a JSON file with the name of the restored checksum marks file,
         and writes the status of the restored checksum marks file to it
@@ -376,7 +352,6 @@ class Restore:
         with open(self.stored_local_path['restored_checksum_marks'], 'w') as f_json:
             json.dump(self.fail_result, f_json)
 
-    # add by hnsong 2022.08.25
     def create_db_redownload_list(self):
         """
         It reads a json file, and if the value of a key is a dictionary,
@@ -386,7 +361,6 @@ class Restore:
             with open(self.stored_local_path['restored_checksum_marks'], 'r') as f_json:
                 self.checksum_value = json.load(f_json)
 
-        # print(json.dumps(self.checksum_value, indent=4))
         for file, value in self.checksum_value.items():
             if isinstance(value, dict):
                 print(value)
@@ -394,7 +368,6 @@ class Restore:
                     f.write(f"{value.get('url')}\n")
                     f.write(f"\t{value.get('out')}\n")
 
-    # add by hnsong 2022.08.25
     def fail_file_delete(self):
         """
         It reads a json file, and deletes all the files listed in the json file
@@ -410,19 +383,19 @@ class Restore:
                     os.remove(del_file)
 
     @staticmethod
-    def _get_file_from_url(url):
+    def _get_file_from_url(url: str = ""):
         file_name = url.split('/')[-1]
         file_name = file_name.split('?')[0]
         return file_name
 
-    def _get_file_locate(self, url):
+    def _get_file_locate(self, url: str = ""):
         full_path = None
         if url:
             file_name = self._get_file_from_url(url)
-            full_path = f"{self.download_path}/{file_name}"
+            full_path = f"{self.restore_path}/{file_name}"
         return full_path
 
-    def download_write_file(self, url, path=None):
+    def download_write_file(self, url: str = "", path: str = ""):
         """
         It downloads a file from a URL and writes it to a file
 
@@ -447,7 +420,7 @@ class Restore:
 
         return full_path_filename
 
-    def download(self, redownload=False):
+    def download(self, redownload: bool = False):
         cmd = None
         command_result = {}
         run_start_time = default_timer()
@@ -538,7 +511,7 @@ class Restore:
         if self.is_send and msg_text:
             output.send_slack(url=self.send_url, msg_text=msg_text, msg_level=msg_level)
 
-    def create_directory(self, dir_name):
+    def create_directory(self, dir_name: str = ""):
         try:
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name)
@@ -559,7 +532,7 @@ class Restore:
             self.match_keyword = f'^kr/.*MainNet'
 
     # s3 response time check
-    def get_connect_time(self, url, name="NULL"):
+    def get_connect_time(self, url: str = "", name: str = "NULL"):
         status_code = 999
         try:
             response = requests.get(f'{url}', timeout=5)
@@ -612,7 +585,7 @@ class Restore:
         return last_latency["url"]
 
     # get download backup file list
-    def get_file_list(self, file_url):
+    def get_file_list(self, file_url: str = ""):
         self.cfg.logger.info(f"[RESTORE] get_file_list | file_url={file_url}")
         file_list_url = None
         try:
@@ -631,26 +604,24 @@ class Restore:
             self.cfg.logger.error(f'[RESTORE] [ERROR] {e}')
 
         try:
-            # log_print(f"++ {line_info()} | {file_list_url}","green")
             dl_file_list = requests.get(file_list_url)
             self.f_dict = dl_file_list.json()
         except Exception as e:
             self.cfg.logger.error(f'[RESTORE] [ERROR] {e}')
-            # log_print(f"-- {line_info()} | {e}", "red")
 
         return self.f_dict, self.dl_url
 
-    def dir_free_size(self, path):
+    def dir_free_size(self, path: str = ""):
         total, used, free = shutil.disk_usage(path)
-        dirsize = self.get_dir_size(path)
+        dir_size = self.get_dir_size(path)
         # 남은 공간 대비 db 디렉토리 사용량 (퍼센트)
-        dirusage = dirsize / free * 100.0
-        return dirusage
+        dir_usage = dir_size / free * 100.0
+        return dir_usage
 
-    def get_dir_size(self, path):
+    def get_dir_size(self, path: str = ""):
         total = 0
-        with os.scandir(path) as it:
-            for entry in it:
+        with os.scandir(path) as paths:
+            for entry in paths:
                 if entry.is_file():
                     total += entry.stat().st_size
                 elif entry.is_dir():
@@ -696,7 +667,7 @@ class Restore:
                     self.cfg.logger.info(f'[RESTORE] Delete Old Backup file  : {os.path.join(dl_path, del_file)}')
                     os.remove(os.path.join(dl_path, del_file))
 
-    def get_bkfile(self, get_url, dl_info):
+    def get_bkfile(self, get_url: str = "", dl_info: dict = {}):
         # backup file download
         for f_url, cksum_value in dl_info.items():
             download_url = f'{get_url}/{f_url}'
@@ -903,7 +874,6 @@ def main():
 
     # test config  json download url  : https://d1hfk7wpm6ar6j.cloudfront.net/SejongNet/default_configure.json
     # # test path & file   : /goloop/default_configure.json
-    # use_file=True
     use_file = False
     cfg = Configure(use_file=use_file)
     config = cfg.config
@@ -935,61 +905,12 @@ def main():
         base_dir = icon2_config['BASE_DIR']
         db_path = os.path.join(base_dir, default_db_path)
 
-    # Restore Options
-    # network  =  MainNet | SejongNet ....
-    # network = env_config['SERVICE'] if env_config.get('SERVICE') else compose_env_config['SERVICE']
-    # if env_config.get('RESTORE_PATH'):
-    #     restore_path = env_config['RESTORE_PATH']
-    # else:
-    #     restore_path = compose_env_config['RESTORE_PATH']
-    #
-    # if env_config.get('DOWNLOAD_FORCE'):
-    #     dl_force = env_config['DOWNLOAD_FORCE']
-    # else:
-    #     dl_force = compose_env_config['DOWNLOAD_FORCE']
-
-    # if env_config.get('DOWNLOAD_TOOL'):
-    #     download_tool = env_config['DOWNLOAD_TOOL']
-    # else:
-    #     download_tool = compose_env_config['DOWNLOAD_TOOL']
-
-    # if env_config.get('DOWNLOAD_URL'):
-    #     download_url = env_config['DOWNLOAD_URL']
-    # else:
-    #     download_url = compose_env_config['DOWNLOAD_URL']
-
-    # if env_config.get('DOWNLOAD_URL_TYPE'):
-    #     download_url_type = env_config['DOWNLOAD_URL_TYPE']
-    # else:
-    #     downlaod_url_type = compose_env_config['DOWNLOAD_URL_TYPE']
-    #
-
     network = icon2_config['SERVICE']
     restore_path = icon2_config['RESTORE_PATH']
     dl_force = icon2_config['DOWNLOAD_FORCE']
     download_tool = icon2_config['DOWNLOAD_TOOL']
     download_url = icon2_config['DOWNLOAD_URL']
     download_url_type = icon2_config['DOWNLOAD_URL_TYPE']
-
-    # # Test path
-    # db_path = "/app/goloop/data2"
-    # # Test config
-    # network = "MainNet"
-    # restore_path = "restore"
-    # dl_force = True
-    # download_url = f'https://icon2-backup-kr.s3.ap-northeast-2.amazonaws.com/s3sync'    ##s3sync url
-    # download_url = f'https://download.solidwallet.io'            ## test cf
-    # download_tool = "aria2"
-    # download_url_type = "cf"
-
-    # print(f'db_path = {db_path}')
-    # print(f'network = {network}')
-    # print(f'restore_path = {restore_path}')
-
-    # print(f'dl_force = {dl_force}')
-    # print(f'download_tool = {download_tool}')
-    # print(f'download_url = {download_url}')
-    # print(f'download_url_type = {download_url_type}')
 
     Restore(
         db_path=db_path,
