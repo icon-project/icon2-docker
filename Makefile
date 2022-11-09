@@ -161,7 +161,9 @@ changeconfig: make_build_args
 change_version:
 		$(call colorecho, "-- Change Goloop Version ${VERSION} --")
 
-		@rm -f $(GOLOOP_PATH)
+		@if [ -e "$(GOLOOP_PATH)" ]; then \
+    		@rm -rf $(GOLOOP_PATH)
+		fi
 
 		@git submodule update --init --recursive --remote;
 		@cd $(GOLOOP_PATH) && git fetch origin --tags && git checkout $(VERSION);
