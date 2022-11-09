@@ -161,12 +161,7 @@ changeconfig: make_build_args
 change_version:
 		$(call colorecho, "-- Change Goloop Version ${VERSION} --")
 
-		@rm -f $(GOLOOP_PATH)/.git
-
-		@if [ -e "$(GOLOOP_PATH)/.git__" ]; then \
-			echo 'Recovery git file'; \
-			mv $(GOLOOP_PATH)/.git__ $(GOLOOP_PATH)/.git; \
-		fi
+		@rm -f $(GOLOOP_PATH)
 
 		@git submodule update --init --recursive --remote;
 		@cd $(GOLOOP_PATH) && git fetch origin --tags && git checkout $(VERSION);
