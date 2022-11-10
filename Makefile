@@ -165,14 +165,14 @@ change_version:
     		rm -rf $(GOLOOP_PATH); \
 		fi
 
-		@git submodule update --init --recursive --remote;
+		@git clone https://github.com/icon-project/goloop $(GOLOOP_PATH)
 		@cd $(GOLOOP_PATH) && git fetch origin --tags && git checkout $(VERSION);
 
 		@if [ '${GIT_DIRTY}' != '' ]  ; then \
 				echo '[CHANGED] ${GIT_DIRTY}'; \
 				git pull ;\
 		fi
-		@mv $(GOLOOP_PATH)/.git $(GOLOOP_PATH)/.git__
+
 
 
 check-and-reinit-submodules:
