@@ -1,6 +1,6 @@
 REPO_HUB = iconloop
 NAME = icon2-node
-VERSION = v1.2.10
+VERSION = v1.3.1
 NTP_VERSION = ntp-4.2.8p15
 IS_LOCAL = true
 BASE_IMAGE = goloop-icon
@@ -60,8 +60,6 @@ ifeq ($(MAKECMDGOALS) , bash)
     NGINX_THROTTLE_BY_IP_VAR:="\$$binary_remote_addr"
 	LOCAL_TEST:="true"
 #	FASTEST_START:="true"
-#	MIGRATION_START="true"
-#	MIG_DB="true"
 	NTP_REFRESH_TIME:="30"
 	MAIN_TIME_OUT:="30"
 	ROLE:=0
@@ -122,7 +120,7 @@ make_debug_mode:
 				$(if  \
 					$(filter-out environment% default automatic, $(origin $V) ), \
 						$($V=$($V)) \
-					$(if $(filter-out "SHELL" "%_COLOR" "%_STRING" "MAKE%" "colorecho" ".DEFAULT_GOAL" "CURDIR" "TEST_FILES" "DOCKER_BUILD_OPTION" , "$V" ),  \
+					$(if $(filter-out "SHELL" "%_COLOR" "%_STRING" "MAKE%" "colorecho" ".DEFAULT_GOAL" "CURDIR" "TEST_FILES" "DOCKER_BUILD_OPTION" "GIT_DIRTY" , "$V" ),  \
 						$(shell echo $(ECHO_OPTION) '$(OK_COLOR)  $V = $(WARN_COLOR) $($V) $(NO_COLOR) ' >&2;) \
 						$(shell echo '-e $V=$($V)  ' >> DEBUG_ARGS)\
 					)\
@@ -161,17 +159,20 @@ changeconfig: make_build_args
 
 
 change_version:
-		@#$(call chdir, $(GOLOOP_PATH))
-		@#cd $(GOLOOP_PATH) && git checkout $(VERSION);
-
 		$(call colorecho, "-- Change Goloop Version ${VERSION} --")
-		@git submodule update --init --recursive --remote;
+
+		@if [ -e "$(GOLOOP_PATH)" ]; then \
+    		rm -rf $(GOLOOP_PATH); \
+		fi
+
+		@git clone https://github.com/icon-project/goloop $(GOLOOP_PATH)
 		@cd $(GOLOOP_PATH) && git fetch origin --tags && git checkout $(VERSION);
 
 		@if [ '${GIT_DIRTY}' != '' ]  ; then \
 				echo '[CHANGED] ${GIT_DIRTY}'; \
 				git pull ;\
 		fi
+
 
 
 check-and-reinit-submodules:

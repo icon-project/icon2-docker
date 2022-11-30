@@ -14,8 +14,8 @@ from itertools import zip_longest
 from termcolor import cprint
 
 
-def get_public_ip():
-    return requests.get("http://checkip.amazonaws.com").text.strip()
+# def get_public_ip():
+#     return requests.get("http://checkip.amazonaws.com").text.strip()
 
 
 def get_local_ip():
@@ -155,8 +155,6 @@ class FileIndexer:
         self.write_json(self.checksum_filename, self.indexed_file_dict)
 
     def set_result(self, file_path, key, value):
-        # self.result = {}
-
         if self.result['error'].get(file_path) is None:
             self.result['error'][file_path] = {}
 
@@ -196,7 +194,9 @@ class FileIndexer:
                     this_checksum = self.get_xxhash(full_path_file)
                     if this_checksum != value.get("checksum"):
                         is_ok_file_checksum = False
-                        self.set_result(full_path_file, "checksum", False)
+                        self.set_result(full_path_file, "checksum", False) # honam
+                        self.set_result(full_path_file, "checksum_hash", f'{this_checksum} /{value.get("checksum")}') # honam
+
                         if self.debug:
                             cprint(f"[CHECK][NOT MATCHED HASH] {full_path_file}, {this_checksum} != {value.get('checksum')}, {value}", "red")
 
@@ -212,6 +212,7 @@ class FileIndexer:
 
         if self.result.get('error') and len(self.result['error']) > 0:
             self.result['status'] = "FAIL"
+            self.result['error']['date'] = f'{(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])}' # honam
         return self.result
 
     @staticmethod
@@ -236,7 +237,6 @@ class FileIndexer:
             if os.path.exists(filename):
                 print("[OK] Write json file -> %s, %s" % (filename, self.get_file_size(filename)))
         except:
-            # cprint(f"path not found {filename}", "red")
             print(f"[ERROR] can't write to json -> {filename}")
             raise
 
