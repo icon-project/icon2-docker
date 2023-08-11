@@ -38,3 +38,4 @@ icon/
 ctx/tests/goloop/*
 
 tests/goloop*/*
+binary/*

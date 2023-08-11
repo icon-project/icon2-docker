@@ -41,7 +41,7 @@ else :
     db_path = os.path.join(base_dir, default_db_path)
 
 ### Restore Options
-### network  =  MainNet | SejongNet ....
+### network  =  MainNet | LisbonNet|BerlinNet ....
 # network = env_config['SERVICE']  if env_config.get('SERVICE') else compose_env_config['SERVICE']
 # restore_path = env_config['RESTORE_PATH']  if env_config.get('RESTORE_PATH') else compose_env_config['RESTORE_PATH']
 # dl_force = env_config['DOWNLOAD_FORCE']  if env_config.get('DOWNLOAD_FORCE') else compose_env_config['DOWNLOAD_FORCE']

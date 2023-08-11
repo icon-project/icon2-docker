@@ -249,8 +249,8 @@ list:
 
 
 change_docker:
-	sed -i $(SED_OPTION) "s/$(REPO_HUB)\/$(NAME).*/$(REPO_HUB)\/$(NAME):$(VERSION)/g" docker-compose.yml
+	sed -i $(SED_OPTION) "s/$(REPO_HUB)\/$(NAME).*/$(REPO_HUB)\/$(NAME):$(VERSION)'/g" docker-compose.yml
 
 
 gendocs: change_docker
-	@$(shell ./makeMarkDown.sh)
+

@@ -195,7 +195,7 @@ def get_file_info(file):
 def get_parser():
     parser = argparse.ArgumentParser(description='Send me log')
     parser.add_argument('-f', '--find', action='count', help=f'Find fastest region, just checking', default=0)
-    parser.add_argument('--network', type=str, help=f'Network name', choices=["MainNet", "SejongNet"], default="MainNet")
+    parser.add_argument('--network', type=str, help=f'Network name', choices=["MainNet", "LisbonNet", "BerlinNet"], default="MainNet")
     parser.add_argument('-d', '--log-dir', metavar='log-dir', type=str, help=f'log directory location', default=None)
     parser.add_argument('--static-dir', metavar='static-dir', type=str, nargs="+", help=f'include log directory location', default=None)
 

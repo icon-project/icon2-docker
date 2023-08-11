@@ -18,7 +18,7 @@ class TestNodeChecker(ContainerTestCase):
             "icon2-node": {
                 "environment": {
                     "IS_AUTOGEN_CERT": "true",
-                    # "SERVICE": "SejongNet",
+                    # "SERVICE": "LisbonNet",
                     "FASTEST_START": "false",
                     "KEY_STORE_FILENAME": "keystore.json",
                     "ROLE": 3,

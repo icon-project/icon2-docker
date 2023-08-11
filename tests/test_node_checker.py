@@ -76,7 +76,7 @@ class TestNodeChecker(ContainerTestCase):
                 "services": {
                     "icon2-node": {
                         "environment": {
-                            "SERVICE": "SejongNet"
+                            "SERVICE": "LisbonNet"
                         }
                     }
                 }

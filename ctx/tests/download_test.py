@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-#https://hooks.slack.com/services/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
-# from config.configure import Configure
-# from common import base, output
-# conf = Configure()
-# print(conf)
-
-
-
 import requests
 import yaml
 
@@ -374,12 +366,9 @@ download_base_dir = "data"
 
 # index_filename = download_file(stage2_info.get('index_url'))
 # checksum_filename = download_file(stage2_info.get('checksum_url'))
+index_filename = download_file("https://icon2-backup-kr.s3.ap-northeast-2.amazonaws.com/s3sync/LisbonNet/file_list.txt")
 
-index_filename = download_file("https://icon2-backup-kr.s3.ap-northeast-2.amazonaws.com/s3sync/SejongNet/file_list.txt")
 
-
-# print(stage2_info)
-# exit()
 aric2c_cmd = f"aria2c -d {download_base_dir} -i {index_filename} " \
              f" -V -j20 -x16 --http-accept-gzip --check-certificate=false" \
              f" --conditional-get --disk-cache=64M  --allow-overwrite --log-level=error --log download_error.log -c"
