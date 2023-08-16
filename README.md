@@ -36,7 +36,7 @@ services:
       network_mode: host
       restart: "on-failure"
       environment:
-         SERVICE: "MainNet"  # MainNet, SejongNet  ## kind of network type 
+         SERVICE: "MainNet"  # MainNet, LisbonNet, BerlinNet   ## kind of network type 
          GOLOOP_LOG_LEVEL: "debug" # trace, debug, info, warn, error, fatal, panic          
          KEY_STORE_FILENAME: "INPUT_YOUR_KEY_STORE_FILENAME" # e.g. keystore.json read a config/keystore.json
          # e.g. "/goloop/config/keystore.json" read a "config/keystore.json" of host machine
@@ -108,7 +108,7 @@ The directories(data, config, icon, logs …) are created by docker engine, but 
 
 | Name               | default                | type | required | description                                                                      |
 |--------------------|------------------------|------|----------|----------------------------------------------------------------------------------|
-| SERVICE            | MainNet                | str  | false    |  Service Name - (MainNet, SejongNet)                                             |
+| SERVICE            | MainNet                | str  | false    | Service Name - (MainNet, LisbonNet, BerlinNet)                                   |
 | ROLE               | 0                      | int  | true     | Role of running node. 0: Citizen, 3: P-Rep                                       |
 | CONFIG_URL         |                        | str  | false    |                                                                                  |
 | CONFIG_URL_FILE    | default_configure.json | str  | false    |                                                                                  |
@@ -117,7 +117,7 @@ The directories(data, config, icon, logs …) are created by docker engine, but 
 | FASTEST_START      | false                  | bool | false    | Download snapshot DB                                                             |
 | KEY_STORE_FILENAME | keystore.json          | str  | true     | keystore.json file name                                                          |
 | KEY_PASSWORD       |                        | str  | true     | password of keystore.json file                                                   |
-| USE_NTP_SYNC       | True                   | bool | false    | Whether to use NTP in container                                                                       |
+| USE_NTP_SYNC       | True                   | bool | false    | Whether to use NTP in container                                                  |
 | NTP_SERVER         |                        | str  | false    | NTP Server                                                                       |
 | NTP_REFRESH_TIME   |                        | int  | false    | ntp refresh time                                                                 |
 | SLACK_WH_URL       |                        | str  | false    | slack web hook url - If a problem occurs, you can receive an alarm with a slack. |
