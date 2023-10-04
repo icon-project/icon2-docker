@@ -17,6 +17,24 @@ from ffcount import ffcount
 
 cfg = CFG()
 
+# import asyncio
+# class AsyncRunner:
+#     def __init__(self, command_list=[]):
+#         self.command_list = command_list
+#
+#     def run(self):
+#         asyncio.run(self.run_managers())
+#
+#     def push_command(self, command=None):
+#         if command:
+#             self.command_list.append(command)
+#
+#     async def run_managers(self):
+#         print("Running AsyncRunner")
+#         if isinstance(self.command_list, list):
+#             print(self.command_list)
+#             await asyncio.wait(self.command_list)
+
 
 class cd:
     """Context manager for changing the current working directory"""
