@@ -9,11 +9,12 @@ from datetime import datetime
 
 
 class UpdateType:
-    def __init__(self, config=None, logger=None):
+    def __init__(self, config=None, logger=None, debug=False):
         if config is None:
             config = {}
         self.config = config
         self.logger = logger
+        self.debug = debug
         self.required_type = {}
         self.return_result = {}
 
@@ -26,13 +27,22 @@ class UpdateType:
         if self.config.get("settings") and self.config['settings'].get('env'):
             self.settings_env = self.config['settings']['env']
 
+    # @staticmethod
+    def _check_required_value(self, required_value):
+        if self._check_value_in_dict(required_value) and required_value.get("type"):
+            return True
+        return False
+
+    @staticmethod
+    def _check_value_in_dict(required_value):
+        return isinstance(required_value, dict) and required_value.get('default', '__NOT_DEFINED__') != '__NOT_DEFINED__'
+
     def check(self):
         self.parse_config()
         for required_key, required_value in self.required_type.items():
-            if isinstance(required_value, dict) and required_value.get('default') and required_value.get("type"):
+            # if isinstance(required_value, dict) and required_value.get('default') and required_value.get("type"):
+            if self._check_required_value(required_value):
                 result = self.check_value_type(required_value.get('default'), required_value.get('type'), key=required_key)
-                # debug(result)
-                # print(f"required_key={required_key}, value={required_value}, result={result}")
                 self.return_result[required_key] = result
         self.update_env_config()
         return self.return_result
@@ -63,7 +73,7 @@ class UpdateType:
 
     @staticmethod
     def is_type_dict(value):
-        if isinstance(value, dict) and value.get('default', "NOT_NONE") is not "NOT_NONE" and value.get('type'):
+        if isinstance(value, dict) and value.get('default', "NOT_NONE") != "NOT_NONE" and value.get('type'):
             return True
         return False
 
@@ -123,16 +133,17 @@ class UpdateType:
         return return_value
 
     def logging(self, message=None, level="info"):
-        message_text = f"[CheckType] {message}"
-        if self.logger:
-            if level == "info" and hasattr(self.logger, "info"):
-                self.logger.info(message_text)
-            elif level == "error" and hasattr(self.logger, "error"):
-                self.logger.error(message_text)
-            elif level == "warn" and hasattr(self.logger, "warn"):
-                self.logger.warn(message_text)
-        else:
-            print(f"[{level.upper()}]{message_text}")
+        if self.debug:
+            message_text = f"[CheckType] {message}"
+            if self.logger:
+                if level == "info" and hasattr(self.logger, "info"):
+                    self.logger.info(message_text)
+                elif level == "error" and hasattr(self.logger, "error"):
+                    self.logger.error(message_text)
+                elif level == "warn" and hasattr(self.logger, "warn"):
+                    self.logger.warn(message_text)
+            else:
+                print(f"[{level.upper()}]{message_text}")
 
 
 def random_passwd(digit=8):
@@ -184,7 +195,7 @@ def str2bool(v):
         return False
     elif type(v) == bool:
         return v
-    if v.lower() in ('yes', 'true',  't', 'y', '1'):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
@@ -242,8 +253,8 @@ def long_to_bytes(val, endianness='big'):
 def format_seconds_to_hhmmss(seconds):
     try:
         seconds = int(seconds)
-        hours = seconds // (60*60)
-        seconds %= (60*60)
+        hours = seconds // (60 * 60)
+        seconds %= (60 * 60)
         minutes = seconds // 60
         seconds %= 60
         return "%02i:%02i:%02i" % (hours, minutes, seconds)
@@ -264,14 +275,11 @@ region_info = {
 
 region_cf_info = {
     "Seoul": "kr/bk",
-#    "Tokyo": "jp/bk",
-#    "Virginia": "va/bk",
-#    "Hongkong": "hk/bk",
-#    "Singapore": "sg/bk",
-#    "Mumbai": "mb/bk",
-#    "Frankfurt": "ff/bk",
-#    "Sydney": "sy/bk"
+    #    "Tokyo": "jp/bk",
+    #    "Virginia": "va/bk",
+    #    "Hongkong": "hk/bk",
+    #    "Singapore": "sg/bk",
+    #    "Mumbai": "mb/bk",
+    #    "Frankfurt": "ff/bk",
+    #    "Sydney": "sy/bk"
 }
-
-
-

@@ -3,13 +3,14 @@ import os
 import logging
 from logging import handlers
 import datetime
+from rich.console import Console
+from rich.logging import RichHandler
+
 
 class CustomLog:
     def __init__(self, name):
         self.log = logging.getLogger(name)
         self.log.propagate = True
-        # self.formatter = logging.Formatter("%(levelname).1s|%(asctime)s.%(msecs)06d|-|%(name)s|%(message)s", "%Y%m%d-%H:%M:%S")
-        # self.formatter = logging.Formatter(f"%(levelname).1s|%(asctime)s.%(msecs)06d|-|%(name)s|%(filename)s:%(lineno)d %(funcName)-15s| %(message)s", "%Y%m%d-%H:%M:%S")
         self.formatter = logging.Formatter(
             f"%(levelname).1s|%(asctime)s.%(msecs)06d|-|%(name)s|%(filename)s:%(lineno)d| %(message)s",
             "%Y%m%d-%H:%M:%S"
@@ -21,7 +22,6 @@ class CustomLog:
             "ERROR": logging.ERROR,
             "CRITICAL": logging.CRITICAL}
 
-
     def set_level(self, level):
         self.log.setLevel(self.levels[level])
 
@@ -31,6 +31,17 @@ class CustomLog:
         """
         log_str = f"{msg}"
         return log_str
+
+    def add_rich_handler(self, level):
+        console = Console()
+        logging_handler = RichHandler(console=console)
+        logging_handler.setLevel(self.levels[level])
+        logging_handler.setFormatter(self.formatter)
+        logging_handler._log_render.show_time = False
+        logging_handler._log_render.show_level = False
+        logging_handler._log_render.show_path = False
+        self.log.addHandler(logging_handler)
+        return self.log
 
     def stream_handler(self, level):
         """
@@ -91,12 +102,12 @@ class CustomLog:
         return self.log
 
     def time_rotate_handler(self,
-                           filename='./log.txt',
-                           when="M",
-                           level="DEBUG",
-                           backup_count=4,
-                           atTime=datetime.time(0, 0, 0),
-                           interval=1):
+                            filename='./log.txt',
+                            when="M",
+                            level="DEBUG",
+                            backup_count=4,
+                            atTime=datetime.time(0, 0, 0),
+                            interval=1):
         """
         :param filename:
         :param when: 저장 주기
@@ -124,12 +135,11 @@ if __name__ == '__main__':
     logger.set_level('DEBUG')
     logger.stream_handler("INFO")
     logger.time_rotate_handler(filename=file_name,
-                                 when="M",
-                                 interval=2,
-                                 backup_count=3,
-                                 level="INFO"
-                                 )
-    ## run
+                               when="M",
+                               interval=2,
+                               backup_count=3,
+                               level="INFO"
+                               )
     idx = 0
     while True:
         logger.log.debug(logger.log_formatter(f'debug {idx}'))

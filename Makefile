@@ -7,6 +7,12 @@ BASE_IMAGE = goloop-icon
 IS_NTP_BUILD = false
 GOLOOP_PATH = goloop
 DEBUG = false
+GOLOOP_BUILD_CMD = "goloop-icon-image"
+
+ifneq ("$(wildcard .env)","")
+include .env
+export $(shell sed 's/=.*//' .env)
+endif
 
 ifeq ($(DEBUG), true)
 	VERBOSE_OPTION = -v
@@ -20,7 +26,6 @@ ifeq ($(debug), true)
 else
 	VERBOSE_OPTION =
 endif
-GOLOOP_BUILD_CMD = "goloop-icon-image"
 
 ifdef version
 VERSION = $(version)
@@ -53,19 +58,23 @@ ifeq ($(MAKECMDGOALS) , bash)
 	DOWNLOAD_URL_TYPE:="indexing"
 #	SEEDS:="20.20.6.86:7100"
 #	AUTO_SEEDS:=True
-	SERVICE:=MainNet
+#	SERVICE:=MainNet
+	SERVICE:=BerlinNet
 #	CC_DEBUG:="true"
 	IS_AUTOGEN_CERT:=true
     PRIVATE_KEY_FILENAME:="YOUR_KEYSTORE_FILENAME.der"
     NGINX_THROTTLE_BY_IP_VAR:="\$$binary_remote_addr"
-	LOCAL_TEST:="true"
+	LOCAL_TEST:="false"
 #	FASTEST_START:="true"
 	NTP_REFRESH_TIME:="30"
 	MAIN_TIME_OUT:="30"
-	ROLE:=0
+	ROLE:=3
 	GOLOOP_CONSOLE_LEVEL:="trace"
 	GOLOOP_LOG_LEVEL:="trace"
 	LOG_OUTPUT_TYPE:="console"
+	KEY_PASSWORD:="testtest"
+	USE_HEALTH_CHECK:="false"
+	CTX_LEVEL:="debug"
 #	GOLOOP_NODE_SOCK:="/goloop/cli.sock"
 #	GOLOOP_EE_SOCKET:="/goloop/ee.sock"
 
@@ -111,6 +120,13 @@ version:
 print_version:
 	@echo $(ECHO_OPTION) "$(OK_COLOR) VERSION-> $(VERSION)  REPO-> $(REPO_HUB)/$(NAME):$(TAGNAME) $(NO_COLOR) IS_LOCAL: $(IS_LOCAL)"
 #	@$(shell echo $(ECHO_OPTION) "$(OK_COLOR) ----- Build Environment ----- \n $(NO_COLOR)")
+
+check_duplicate_vars:
+	@echo "Checking for duplicate environment variable definitions..."
+	@$(foreach var,$(shell sed 's/=.*//' .env), \
+		$(if $(findstring $(var),$(.VARIABLES)), \
+			echo "$(ERROR_COLOR) ** WARNING: Variable $(var) is defined in both the Makefile and .env! Makefile value will be used.$(NO_COLOR)";))
+
 
 make_debug_mode:
 	@$(shell echo $(ECHO_OPTION) "$(OK_COLOR) ----- DEBUG Environment ----- $(MAKECMDGOALS)  \n $(NO_COLOR)" >&2)\
@@ -230,13 +246,13 @@ tag_latest: print_version
 		docker push $(REPO_HUB)/$(NAME):latest
 
 
-bash: make_debug_mode print_version
+bash: make_debug_mode check_duplicate_vars print_version
 	docker run  $(shell cat DEBUG_ARGS) -p 9000:9000 -p 7100:7100 -it -v $(PWD)/config:/goloop/config -v ${PWD}/s6:/s6-int \
 		-v $(PWD)/logs:/goloop/logs -v $(PWD)/ctx:/ctx -v $(PWD)/data:/goloop/data -e VERSION=$(TAGNAME) -v $(PWD)/src:/src --entrypoint /bin/bash \
 		--name $(NAME) --cap-add SYS_TIME --rm $(REPO_HUB)/$(NAME):$(TAGNAME)
 
 
-f_bash: make_debug_mode print_version
+f_bash: make_debug_mode check_duplicate_vars print_version
 		docker run  $(shell cat DEBUG_ARGS) -p 9000:9000 -p 7100:7100 -it -v $(PWD)/config:/goloop/config \
 		-v $(PWD)/logs:/goloop/logs -v $(PWD)/ctx:/ctx -v $(PWD)/data:/goloop/data -e VERSION=$(TAGNAME) -v $(PWD)/src:/src --entrypoint /bin/bash \
 		--name $(NAME) --network host --restart on-failure $(REPO_HUB)/$(NAME):$(TAGNAME)

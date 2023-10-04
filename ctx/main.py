@@ -13,7 +13,7 @@ cfg = CFG(use_file=True)
 if cfg.base_env['ONLY_GOLOOP'] is True:
     while True:
         time.sleep(1000)
-cfg.get_config(True)
+# cfg.get_config(True)
 for log_file in cfg.config.get('DOCKER_LOG_FILES').split(','):
     cfg.loggers[log_file] = cfg.init_logger(log_file, 'debug')
 

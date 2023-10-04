@@ -7,8 +7,9 @@ import requests
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.configure import Configure as CFG
 from common.icon2 import WalletLoader
-from common.output import is_file,  write_file, write_json, write_yaml, dump
+from common.output import is_file, write_file, write_json, write_yaml, dump
 from manager.restore_v3 import Restore
+from pawnlib.resource import net
 
 
 class ConfigureSetter:
@@ -81,7 +82,7 @@ class ConfigureSetter:
             )
             self.cfg.logger.info(f"{rs}")
         else:
-            self.cfg.logger.error(f"API status code is {res.status_code}. ({genesis_file})")
+            self.cfg.logger.error(f"[ERROR] Cant download the genesis_file ({genesis_file}). status_code={res.status_code}")
 
     def create_icon_config(self, ):
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
@@ -102,7 +103,7 @@ class ConfigureSetter:
         )
         self.cfg.logger.info(f"{rs}")
 
-    def create_env_file(self, file_name: str='.env'):
+    def create_env_file(self, file_name: str = '.env'):
         file_name = f"{os.path.join(self.base_dir, file_name)}"
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         with open(file_name, 'w') as env:
@@ -120,17 +121,17 @@ class ConfigureSetter:
                              f"FASTEST_START = {self.config.get('FASTEST_START')}"
                              )
         if self.config.get('FASTEST_START') is True:
-            self.cfg.logger.info(f"[RESTORE] DOWNLOAD from ICON2 DB")
+            self.cfg.logger.info("[RESTORE] DOWNLOAD from ICON DB")
             self.downloader()
 
         else:
-            self.cfg.logger.info(f"[PASS] Ignore DB download")
+            self.cfg.logger.info("[PASS] Ignore DB download")
 
     def downloader(self, ):
         base_dir = self.config.get('BASE_DIR')
 
         # Goloop DB PATH
-        if self.config.get('GOLOOP_NODE_DIR') :
+        if self.config.get('GOLOOP_NODE_DIR'):
             db_path = self.config['GOLOOP_NODE_DIR']
         else:
             default_db_path = 'data'
@@ -153,6 +154,38 @@ class ConfigureSetter:
             download_tool=download_tool,
             download_url_type=download_url_type,
         )
+
+    def check_seed_servers(self):
+        seeds = self.config.get('SEEDS').split(',')
+        exception_messages = []
+        for seed in seeds:
+            if not net.check_port(seed):
+                exception_messages.append(seed)
+                self.cfg.handle_value_error(f"Failed to connect to the server. seed={seed}")
+        if len(exception_messages) >= len(seeds) > 0:
+            self.cfg.handle_value_error(f"Cannot connect to Seed Servers 👉 {exception_messages}")
+
+    def check_role(self):
+        allows_roles = [0, 1, 3]
+        if self.config.get('ROLE') not in allows_roles:
+            self.cfg.handle_value_error(f"Invalid ROLE, role={self.config.get('ROLE')}, allows={allows_roles}")
+
+    def validate_environment(self):
+        mandatory_env_keys = ["KEY_PASSWORD"]
+        for env_key in mandatory_env_keys:
+            env_value = os.getenv(env_key)
+            self.cfg.logger.debug(f"Validate environment {env_key}={env_value}")
+            if not os.getenv(env_key):
+                # self.logger.error(f"There is no password. Requires '{key}' environment.")
+                self.cfg.handle_value_error(f"There is no '{env_key}'. Requires '{env_key}' environment. {env_key}='{env_value}'")
+
+    def check_server_environment_prepare(self):
+        self.check_seed_servers()
+        self.check_role()
+        self.validate_environment()
+        # TODO
+        # check keystore file
+        # sys.exit(-127)
 
     def run(self, ):
         dump(self.config)
