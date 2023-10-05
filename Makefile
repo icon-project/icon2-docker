@@ -11,7 +11,7 @@ GOLOOP_BUILD_CMD = "goloop-icon-image"
 
 ifneq ("$(wildcard .env)","")
 include .env
-export $(shell sed 's/=.*//' .env)
+export $(shell sed 's/=.*//' .env| cut -d= -f1)
 endif
 
 ifeq ($(DEBUG), true)
@@ -43,9 +43,21 @@ REPO_HUB = $(REPO_HUB_ARG)
 endif
 
 TAGNAME = $(VERSION)
-VCS_REF = $(strip $(shell git rev-parse --short HEAD))
+VCS_REF = $(strip $(shell git rev-parse --short HEAD 2>/dev/null))
 BUILD_DATE = $(strip $(shell date -u +"%Y-%m-%dT%H:%M:%S%Z"))
 GIT_DIRTY  = $(shell cd ${GOLOOP_PATH}; git diff --shortstat 2> /dev/null | tail -n1 )
+GIT_BRANCH = $(strip $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
+GIT_BRANCH := $(subst /,-,$(GIT_BRANCH))
+
+ifeq ($(GIT_BRANCH),)
+TAGNAME := $(VERSION)
+else ifeq ($(GIT_BRANCH),devel)
+TAGNAME := $(VERSION)-dev
+else ifneq ($(GIT_BRANCH),master)
+ifneq ($(GIT_BRANCH),main)
+TAGNAME := $(VERSION)-$(GIT_BRANCH)
+endif
+endif
 
 ifeq ($(IS_LOCAL), true)
 DOCKER_BUILD_OPTION = --progress=plain --no-cache --rm=true
@@ -119,7 +131,7 @@ version:
 
 print_version:
 	@echo $(ECHO_OPTION) "$(OK_COLOR) VERSION-> $(VERSION)  REPO-> $(REPO_HUB)/$(NAME):$(TAGNAME) $(NO_COLOR) IS_LOCAL: $(IS_LOCAL)"
-#	@$(shell echo $(ECHO_OPTION) "$(OK_COLOR) ----- Build Environment ----- \n $(NO_COLOR)")
+
 
 check_duplicate_vars:
 	@echo "Checking for duplicate environment variable definitions..."
