@@ -14,13 +14,7 @@ include .env
 export $(shell sed 's/=.*//' .env| cut -d= -f1)
 endif
 
-ifeq ($(DEBUG), true)
-	VERBOSE_OPTION = -v
-else
-	VERBOSE_OPTION =
-endif
-
-ifeq ($(debug), true)
+ifeq ($(DEBUG)$(debug), true)
 	VERBOSE_OPTION = -v
 	DEBUG = true
 else
@@ -38,6 +32,7 @@ endif
 ifdef VERSION_ARG
 VERSION = $(VERSION_ARG)
 endif
+
 ifdef REPO_HUB_ARG
 REPO_HUB = $(REPO_HUB_ARG)
 endif
@@ -124,7 +119,7 @@ TEST_FILES := $(shell find tests -name '*.yml')
 
 .PHONY: all build push test tag_latest release ssh bash
 
-all: build_goloop_base build
+all: build_goloop_base build remove_goloop_base_image
 hub: push_hub tag_latest
 version:
 	@echo $(VERSION)
@@ -201,8 +196,6 @@ change_version:
 				git pull ;\
 		fi
 
-
-
 check-and-reinit-submodules:
 		@if git submodule status | egrep -q '^[-]|^[+]' ; then \
 				echo "INFO: Need to reinitialize git submodules"; \
@@ -214,19 +207,24 @@ build_goloop_base: make_build_args change_version
 		$(call colorecho, "-- Build goloop base image --")
 		cd $(GOLOOP_PATH) && $(MAKE) $(GOLOOP_BUILD_CMD)
 
+remove_goloop_base_image:
+		$(call colorecho, "-- Remove goloop base image --")
+		docker rmi -f goloop-icon
 
 build: make_build_args
 		docker build $(DOCKER_BUILD_OPTION) -f Dockerfile \
 			$(shell cat BUILD_ARGS) \
 			-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
-		docker rmi -f goloop-icon
 		$(call colorecho, "\n\nSuccessfully build '$(REPO_HUB)/$(NAME):$(TAGNAME)'")
 		@echo "==========================================================================="
 		@docker images | grep  $(REPO_HUB)/$(NAME) | grep $(TAGNAME)
 
+squash:
+		docker-squash -f 70 -t $(REPO_HUB)/$(NAME):$(TAGNAME)-squash $(REPO_HUB)/$(NAME):$(TAGNAME)  -vvv
 
 show_labels: make_build_args
-		docker $(REPO_HUB)/$(NAME):$(TAGNAME) | jq .[].Config.Labels
+		docker inspect $(REPO_HUB)/$(NAME):$(TAGNAME) | jq .[].Config.Labels
+
 
 build_ci: make_build_args change_version
 		cd $(GOLOOP_PATH) && $(MAKE) goloop-icon-image
