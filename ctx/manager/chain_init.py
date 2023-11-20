@@ -142,6 +142,27 @@ class ChainInit:
         else:
             self.cfg.logger.info(f"[CC] Set configure, No actions")
 
+    def set_system_config(self):
+        try:
+            # system_config = ["rpcIncludeDebug", "rpcBatchLimit", "rpcDefaultChannel", "eeInstances"]
+            system_config = self.ctl.view_system_config().get("config")
+            new_system_config = {}
+            for system_key, value in system_config.items():
+                env_value = os.getenv(system_key, "__NOT_DEFINED__")
+                if env_value != '__NOT_DEFINED__':
+                    if str(value).lower() != env_value:
+                        new_system_config[system_key] = env_value
+                        self.cfg.logger.info(f"[CC] Set environment '{system_key}' => '{env_value}'")
+                    else:
+                        self.cfg.logger.info(f"[CC] Already set environment '{system_key}' => '{env_value}'")
+            if new_system_config:
+                self.cfg.logger.info(f"[CC][before] system_config = {system_config}")
+                res = self.ctl.system_config(payload=new_system_config)
+                self.cfg.logger.info(f"[CC][after] system_config = {res}")
+
+        except Exception as e:
+            self.cfg.logger.error(f"[CC] Set system config :: {e}")
+
     def starter(self, ):
         # time.sleep(self.config['settings']['mig'].get('MIG_REST_TIME', 5))
         if int(self.config.get('ROLE')) == 3:
@@ -190,23 +211,7 @@ class ChainInit:
             self.ctl.start()
         rs = self.ctl.get_state()
 
-        try:
-            # system_config = ["rpcIncludeDebug", "rpcBatchLimit", "rpcDefaultChannel", "eeInstances"]
-            system_config = self.ctl.view_system_config().get("config")
-            new_system_config = {}
-            for system_key, value in system_config.items():
-                if os.getenv(system_key) and str(value).lower() != os.getenv(system_key):
-                    system_value = os.getenv(system_key)
-                    new_system_config[system_key] = system_value
-                    self.cfg.logger.info(f"set {system_key} => {system_value}")
-
-            if new_system_config:
-                self.cfg.logger.info(f"[CC][before] system_config = {system_config}")
-                res = self.ctl.system_config(payload=new_system_config)
-                self.cfg.logger.info(f"[CC][after] system_config = {res}")
-
-        except Exception as e:
-            self.cfg.logger.error(f"[CC] Set system config :: {e}")
+        self.set_system_config()
 
         if rs.get('state') == 'started':
             self.cfg.logger.info(f"[CC] STATE [{rs.get('state')}]")
