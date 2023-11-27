@@ -241,6 +241,7 @@ class Configure:
         temp_env['GOLOOP_KEY_STORE'] = os.getenv('GOLOOP_KEY_STORE', "/goloop/config/keystore.json")
         temp_env['NTP_SERVERS'] = os.getenv('NTP_SERVERS', "time.google.com,time.cloudflare.com,time.facebook.com,time.apple.com,time.euro.apple.com")
         temp_env['NTP_SERVER'] = os.getenv('NTP_SERVER', None)
+        temp_env['DOWNLOAD_OPTION'] = os.getenv('DOWNLOAD_OPTION', None)
         # temp_env['ROLE'] = self._get_validated_environment("ROLE", "0", ["0", "1", "3"])
         return temp_env
 
@@ -327,14 +328,12 @@ class Configure:
 
             self.config = converter.UpdateType(self.config, self.logger, debug=_debug).check()
             self.config['config_version'] = _config_version
+        self.force_config_with_env_variable()
 
-    # def validate_environment(self):
-    #     self.logger.debug("Validate environments")
-    #     mandatory_env_keys = ["KEY_PASSWORD"]
-    #     for key in mandatory_env_keys:
-    #         if not os.getenv(key):
-    #             # self.logger.error(f"There is no password. Requires '{key}' environment.")
-    #             self.handle_value_error(f"There is no password. Requires '{key}' environment.")
+    def force_config_with_env_variable(self):
+        env_variable_keys = ["DOWNLOAD_OPTION"]
+        for _env in env_variable_keys:
+            self.config[_env] = os.getenv(_env, None)
 
     def handle_value_error(self, exception_message=""):
         if self.base_env.get('ENABLE_VALIDATION'):

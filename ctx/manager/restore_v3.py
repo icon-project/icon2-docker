@@ -69,8 +69,8 @@ def log_print(msg, color=None, level=None):
     :param level: The level of the message
     """
 
-    color = color if color else f'green'
-    level = level if level else f'INFO'
+    color = color if color else 'green'
+    level = level if level else 'INFO'
 
     now_time = (datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
     output.cprint(f'[{now_time}] [{level:5}] | {msg}', color)
@@ -90,6 +90,7 @@ class Restore:
                  download_url_type='s3',  # Download type check  s3 or cloud front , Default : s3
                  download_tool='axel',  # Download Tool command option .  Default Axel command  [ axel | aria2(aria2c)]
                  download_force=False,  # Download file이 동일할 경우에 대한 액션 True일 경우 모두 삭제 후 download /
+                 download_option=None,
                  # False일 경우 동일 파일 비교 후 다를 경우 삭제 |  사용자 입력(docker 변수로 ) 없을 경우 default 사용  : false
                  ):
         """
@@ -127,6 +128,7 @@ class Restore:
         self.download_type = download_type  # 사용안함
         self.download_force = download_force
         self.download_tool = download_tool  # Default axel
+        self.download_option = download_option
         self.verbose = None
         self.restore_path = None
 
@@ -179,7 +181,7 @@ class Restore:
             output.write_file(self.stored_local_path['restored_marks'], todaydate('ms'))
         elif self.checksum_result.get("status") == "FAIL":
             self.cfg.logger.error(f'[RESTORE] [ERROR] File checksum error : {self.checksum_result.get("status")}')
-            raise Exception(f"[RESTORE] [ERROR] File checksum error")
+            raise Exception("[RESTORE] [ERROR] File checksum error")
 
     def _prepare(self):
         self.restore_path = os.path.join(self.db_path, self.download_path)
@@ -424,8 +426,14 @@ class Restore:
         cmd = None
         command_result = {}
         run_start_time = default_timer()
-        cmd_opt = f'-V -j10 -x8 --http-accept-gzip --disk-cache=64M -c ' \
-                  f'--allow-overwrite --log-level=error --log {self.log_files["download_error"]}'
+        _default_cmd_opt = f" --allow-overwrite --log-level=error --log {self.log_files['download_error']}"
+        if self.download_option:
+            cmd_opt = f"{self.download_option} {_default_cmd_opt}"
+        else:
+            cmd_opt = f'-V -j10 -x8 --http-accept-gzip --disk-cache=64M -c ' \
+                      f'{_default_cmd_opt}'
+
+        self.cfg.logger.info(f"download command option : '{cmd_opt}'")
 
         if self.download_url_type == "indexing":
             total_file_count = len(output.open_json(self.stored_local_path['checksum_url']))

@@ -144,6 +144,7 @@ class ConfigureSetter:
 
         download_url = self.config['DOWNLOAD_URL']
         download_url_type = self.config['DOWNLOAD_URL_TYPE']
+        download_option = self.config.get('DOWNLOAD_OPTION', None)
 
         Restore(
             db_path=db_path,
@@ -153,6 +154,7 @@ class ConfigureSetter:
             download_url=download_url,
             download_tool=download_tool,
             download_url_type=download_url_type,
+            download_option=download_option,
         )
 
     def check_seed_servers(self):

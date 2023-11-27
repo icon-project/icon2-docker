@@ -1,6 +1,6 @@
 REPO_HUB = iconloop
 NAME = icon2-node
-VERSION = v1.3.9
+VERSION = v1.3.13
 NTP_VERSION = ntp-4.2.8p15
 IS_LOCAL = true
 BASE_IMAGE = goloop-icon
@@ -82,6 +82,7 @@ ifeq ($(MAKECMDGOALS) , bash)
 	KEY_PASSWORD:="testtest"
 	USE_HEALTH_CHECK:="false"
 	CTX_LEVEL:="debug"
+	DOWNLOAD_OPTION:="-V -j10 -x16 --http-accept-gzip --disk-cache=64M -c "
 #	GOLOOP_NODE_SOCK:="/goloop/cli.sock"
 #	GOLOOP_EE_SOCKET:="/goloop/ee.sock"
 
@@ -259,7 +260,7 @@ tag_latest: print_version
 bash: make_debug_mode check_duplicate_vars print_version
 	docker run  $(shell cat DEBUG_ARGS) -p 9000:9000 -p 7100:7100 -it -v $(PWD)/config:/goloop/config -v ${PWD}/s6:/s6-int \
 		-v $(PWD)/logs:/goloop/logs -v $(PWD)/ctx:/ctx -v $(PWD)/data:/goloop/data -e VERSION=$(TAGNAME) -v $(PWD)/src:/src --entrypoint /bin/bash \
-		--name $(NAME) --cap-add SYS_TIME --rm $(REPO_HUB)/$(NAME):$(TAGNAME)
+		--name $(NAME)-makefile --cap-add SYS_TIME --rm $(REPO_HUB)/$(NAME):$(TAGNAME)
 
 
 f_bash: make_debug_mode check_duplicate_vars print_version
