@@ -128,7 +128,6 @@ version:
 print_version:
 	@echo $(ECHO_OPTION) "$(OK_COLOR) VERSION-> $(VERSION)  REPO-> $(REPO_HUB)/$(NAME):$(TAGNAME) $(NO_COLOR) IS_LOCAL: $(IS_LOCAL)"
 
-
 check_duplicate_vars:
 	@echo "Checking for duplicate environment variable definitions..."
 	@$(foreach var,$(shell sed 's/=.*//' .env), \
@@ -219,6 +218,26 @@ build: make_build_args
 		$(call colorecho, "\n\nSuccessfully build '$(REPO_HUB)/$(NAME):$(TAGNAME)'")
 		@echo "==========================================================================="
 		@docker images | grep  $(REPO_HUB)/$(NAME) | grep $(TAGNAME)
+
+hotfix_prepare:
+ifeq ($(BASE_IMAGE),goloop-icon)
+HOTFIX_BASE_IMAGE=${REPO_HUB}/${NAME}:${TAGNAME}
+else
+HOTFIX_BASE_IMAGE=${BASE_IMAGE}
+endif
+
+hotfix: hotfix_prepare
+		$(call colorecho, "It will be create a hotfix docker image.")
+		$(call colorecho, "'${HOTFIX_BASE_IMAGE}-hotfix' using base image '${HOTFIX_BASE_IMAGE}'")
+		docker build --build-arg HOTFIX_BASE_IMAGE=$(HOTFIX_BASE_IMAGE) -f Dockerfile.hotfix -t $(HOTFIX_BASE_IMAGE)-hotfix .
+		@echo " "
+		@echo "==========================================================================="
+		@docker images | grep -E '$(subst :,\s+,$(HOTFIX_BASE_IMAGE)-hotfix)'
+		$(call colorecho, "Successfully build '$(HOTFIX_BASE_IMAGE)-hotfix'")
+		@echo " "
+		$(call colorecho, "Check the image '$(HOTFIX_BASE_IMAGE)-hotfix'")
+		docker run --rm -it --entrypoint bash  $(HOTFIX_BASE_IMAGE)-hotfix -c "/goloop/bin/goloop version"
+
 
 squash:
 		docker-squash -f 70 -t $(REPO_HUB)/$(NAME):$(TAGNAME)-squash $(REPO_HUB)/$(NAME):$(TAGNAME)  -vvv

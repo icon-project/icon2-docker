@@ -1,0 +1,5 @@
+ARG HOTFIX_BASE_IMAGE
+FROM ${HOTFIX_BASE_IMAGE}
+
+COPY hotfix_data/goloop /goloop/bin
+RUN chmod +x /goloop/bin/goloop
