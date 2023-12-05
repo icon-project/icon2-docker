@@ -1,7 +1,11 @@
 #!/usr/bin/with-contenv bash
 if [ -f /goloop/.env ]; then
-    export $(cat /goloop/.env)
+    while IFS='=' read -r key temp || [[ -n "$key" ]]; do
+        value=$(echo $temp | sed -e 's/^"//' -e 's/"$//')
+        eval export $key=\"$value\"
+    done < /goloop/.env
 fi
+
 export BASE_DIR=${BASE_DIR:-"/goloop"}
 export LOG_OUTPUT_TYPE=${LOG_OUTPUT_TYPE:-"file"}
 export GOLOOP_CONFIG=${GOLOOP_CONFIG:-"${BASE_DIR}/config/server.json"}
@@ -26,4 +30,3 @@ function logging() {
         echo -ne "$MSG ${APPEND_STRING}" >> "${LOGDIR}/${LOG_TYPE}.log"
     fi
 }
-

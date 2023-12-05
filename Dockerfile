@@ -28,7 +28,8 @@ ENV IS_DOCKER=true \
     BASE_DIR='/goloop' \
     VERSION=$VERSION \
     BUILD_DATE=$BUILD_DATE \
-    VCS_REF=$VCS_REF
+    VCS_REF=$VCS_REF \
+    COLUMNS=120
 
 COPY src/ntpdate /usr/sbin/ntpdate
 COPY ctx /ctx

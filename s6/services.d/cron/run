@@ -1,7 +1,7 @@
 #!/usr/bin/with-contenv bash
 
 if [[ ! "$ONLY_GOLOOP" ]]; then
-    export $(cat /goloop/.env)
+    source /ctx/bin/functions.sh
 
     gomplate -f /ctx/tmpl/logrotate-goloop.tmpl -o /etc/logrotate.d/goloop
     echo -e "0\t0\t*\t*\t*\tlogrotate -f /etc/logrotate.d/goloop" > /etc/crontabs/root

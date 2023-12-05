@@ -104,16 +104,21 @@ class ConfigureSetter:
         self.cfg.logger.info(f"{rs}")
 
     def create_env_file(self, file_name: str = '.env'):
-        file_name = f"{os.path.join(self.base_dir, file_name)}"
-        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
-        with open(file_name, 'w') as env:
-            for key, val in self.config.items():
-                if key in ["KEY_PASSWORD", "KEY_SECRET"]:
-                    continue
-                if isinstance(val, dict) or isinstance(val, list):
-                    continue
-                if val is not None:
-                    env.write(f"{key}={val}\n")
+        file_path = os.path.join(self.base_dir, file_name)
+        self.cfg.logger.info(f"Starting {sys._getframe().f_code.co_name}")
+        try:
+            with open(file_path, 'w') as env_file:
+                for key, value in self.config.items():
+                    if key in ["KEY_PASSWORD", "KEY_SECRET"] or isinstance(value, (dict, list)):
+                        continue
+                    value_str = "" if value is None else str(value)
+                    if " " in value_str:
+                        value_str = f'"{value_str}"'
+                    env_file.write(f"{key}={value_str}\n")
+        except Exception as e:
+            self.cfg.logger.error(f"Error occurred while creating .env file: {e}")
+            raise
+        self.cfg.logger.info(f"Successfully created .env file at {file_path}")
 
     def create_db(self, ):
         self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")

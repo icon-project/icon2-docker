@@ -12,7 +12,7 @@ debug(cfg)
 
 
 # cs.create_yaml_file()
-# cs.create_env_file()
+cs.create_env_file()
 #
 # debug(cfg.config['GOLOOP_LOG_WRITER_FILENAME'])
 
