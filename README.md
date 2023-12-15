@@ -9,6 +9,14 @@ Install Docker Engine: [Install Docker Engine](https://docs.docker.com/engine/in
 Install Docker Compose: [Install Docker Compose](https://docs.docker.com/compose/install/) <br>
 Official Docker Image:  `iconloop/icon2-node`
 
+![Docker Pulls](https://img.shields.io/docker/pulls/iconloop/icon2-node)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/iconloop/icon2-node/latest)
+
+![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/iconloop/icon2-node/latest?logo=icon&label=Production)
+
+![Docker Image Version (latest semver)](https://img.shields.io/docker/v/iconloop/icon2-node?logo=icon&label=Development)
+
+
 
 ```
 System Requirements 
