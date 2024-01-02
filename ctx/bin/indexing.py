@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import append_parent_path
-from config.configure import Configure as CFG
+# from config.configure import Configure as CFG
 from manager.file_indexing import FileIndexer
 import argparse
 import requests
-from common import output, converter, base
+from common import converter
+from pawnlib import output
+from pawnlib.config import pawn
+import os
 
-cfg = CFG()
 
-if base.is_docker():
-    data_dir = f"{cfg.config.get('BASE_DIR', '/goloop')}/data"
+def is_docker():
+    return converter.str2bool(os.environ.get("IS_DOCKER", False))
+
+if is_docker():
+    data_dir = f"{os.getenv('BASE_DIR', '/goloop')}/data"
     checksum_file = f"{data_dir}/restore/checksum.json"
+    output_dir = f"{data_dir}/restore"
+
 
 
 def download_write_file(url, path=None):
@@ -39,19 +46,20 @@ def get_parser():
     sub_parser.add_parser('index')
     sub_parser.default = "check"
 
-    parser.add_argument('-d', '--dir', help='destination directory name (default: ./)',
+    parser.add_argument('-d', '--dir', help=f'destination directory name (default: {data_dir})',
                         default=data_dir)
+    parser.add_argument('-p', '--prefix', help='prefix name (e.g. http://PREFIX/)',
+                        default="")
 
-    parser.add_argument('-p', '--prefix', help=f'prefix name (e.g. http://PREFIX/)',
-                        default=f"")
-
-    parser.add_argument('-m', '--check-method', help=f'how to check the method,',
+    parser.add_argument('-m', '--check-method', help='how to check the method,',
                         choices=["hash", "size"],
-                        default=f"hash")
+                        default="hash")
 
-    parser.add_argument('-v', '--verbose', action='count', help=f'verbose mode. view level', default=0)
-    parser.add_argument('-c', '--checksum-file', help=f'checksum filename', default="checksum.json")
-    parser.add_argument('-o', '--output-path', help=f'output path', default="./")
+    parser.add_argument('--exclude-files', action='append', help='List of files to exclude', default=["restore"])
+
+    parser.add_argument('-v', '--verbose', action='count', help='verbose mode. view level', default=0)
+    parser.add_argument('-c', '--checksum-file', help='checksum filename', default="checksum.json")
+    parser.add_argument('-o', '--output-path', help=f'output path (default: {output_dir}) ', default=output_dir)
 
     return parser.parse_args()
 
@@ -63,22 +71,25 @@ def main():
     else:
         debug = False
 
+    print(args)
+
+    file_indexer = FileIndexer(
+        base_dir=args.dir,
+        debug=debug,
+        check_method=args.check_method,
+        prefix=args.prefix,
+        checksum_filename=args.checksum_file,
+        output_path=args.output_path,
+        exclude_files=args.exclude_files,
+    )
+
     if args.command == "index":
-        FileIndexer(base_dir=args.dir, debug=debug, check_method=args.check_method, prefix=args.prefix).run()
+        file_indexer.run()
     elif args.command == "check":
-        res = FileIndexer(
-            base_dir=args.dir,
-            debug=debug,
-            check_method=args.check_method,
-            prefix=args.prefix,
-            checksum_filename=args.checksum_file
-        ).check()
+        res = file_indexer.check()
+        pawn.console.log(res)
         if res.get("status"):
-            print(f"Check result: {res['status']}")
-        # for status, result in res.items():
-        #     if isinstance(result, dict):
-        #         for key, values in result.items():
-        #             print(f"[{status}], [{key}], [{values}]")
+            pawn.console.log(f"Check result: {res['status']}")
 
 
 if __name__ == "__main__":

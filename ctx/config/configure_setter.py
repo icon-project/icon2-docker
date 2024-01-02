@@ -160,7 +160,7 @@ class ConfigureSetter:
             download_tool=download_tool,
             download_url_type=download_url_type,
             download_option=download_option,
-        )
+        ).run()
 
     def check_seed_servers(self):
         seeds = self.config.get('SEEDS').split(',')

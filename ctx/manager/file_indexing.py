@@ -12,6 +12,9 @@ import datetime
 import re
 from itertools import zip_longest
 from termcolor import cprint
+from pawnlib.output import open_file, open_json
+from pawnlib.config import pawn
+
 
 
 # def get_public_ip():
@@ -33,7 +36,9 @@ def get_local_ip():
 class FileIndexer:
 
     def __init__(self, prefix=None, base_dir="./", index_filename="file_list.txt",
-                 checksum_filename="checksum.json", worker=20, debug=False, check_method="hash"):
+                 checksum_filename="checksum.json", worker=20, debug=False, check_method="hash", output_path="",
+                 exclude_files=None,
+                 ):
         self.prefix = prefix
         self.base_dir = base_dir
         self.index_filename = index_filename
@@ -42,11 +47,22 @@ class FileIndexer:
         self.file_list = []
         self.file_list_all = []
         self.sliced_file_list = None
-        self.exclude_files = ["ee.sock", "icon_genesis.zip", "download.py"]
+        if exclude_files is None:
+            exclude_files = ["ee.sock", "icon_genesis.zip", "download.py"]
+        self.exclude_files = exclude_files
         self.exclude_extensions = ["sock"]
         self.debug = debug
-        self.count = 0
+        self.count = 1
         self.total_file_count = 0
+        self.url_dict = {}
+
+        if output_path:
+            if not os.path.isdir(output_path):
+                raise ValueError(f"output_path not found - {output_path}")
+
+            self.index_filename = os.path.join(output_path, self.index_filename)
+            self.checksum_filename = os.path.join(output_path, self.checksum_filename)
+
         self.result = {
             "status": "OK",
             "error": {}
@@ -71,7 +87,7 @@ class FileIndexer:
             if file and self.is_exclude_list(file):
                 self.file_list.append(file)
 
-        self.total_file_count = len(self.file_list) - 1
+        self.total_file_count = len(self.file_list)
 
         iterables = [iter(self.file_list)] * self.worker
         self.sliced_file_list = zip_longest(*iterables, fillvalue=None)
@@ -80,7 +96,7 @@ class FileIndexer:
         for exclude in self.exclude_files:
             if exclude in dest_string:
                 return False
-        root, extension = os.path.splitext(dest_string)
+        _ , extension = os.path.splitext(dest_string)
         if extension:
             extension = extension.replace(".", "")
             if extension in self.exclude_extensions:
@@ -139,7 +155,7 @@ class FileIndexer:
 
         end = time.time() - start
         if self.debug:
-            print(f"[INDEX][{self.count}/{self.total_file_count}] {end:.2f}ms file={dest_file}, size={file_size}, checksum={checksum}")
+            pawn.console.log(f"[INDEX][{self.count:>4}/{self.total_file_count:<4}] {end:.2f}ms file={dest_file:<40}, size={file_size:<10}, checksum={checksum}")
         self.count += 1
         return checksum
 
@@ -155,64 +171,91 @@ class FileIndexer:
         self.write_json(self.checksum_filename, self.indexed_file_dict)
 
     def set_result(self, file_path, key, value):
-        if self.result['error'].get(file_path) is None:
-            self.result['error'][file_path] = {}
+        full_file_path = f"{self.base_dir}/{file_path}"
+        # full_file_path = file_path
 
-        self.result['error'][file_path][key] = value
+        if self.result['error'].get(full_file_path) is None:
+            self.result['error'][full_file_path] = {}
+
+        self.result['error'][full_file_path][key] = value
+
+        if self.url_dict.get(file_path):
+            self.result['error'][full_file_path].update(self.url_dict.get(file_path))
+
         self.result['status'] = "FAIL"
 
+    def create_url_dict(self, file_content=""):
+        """
+        Create a dictionary from a string containing URLs and output paths.
+        Each 'out' path is a key, and the corresponding URL is the value.
+
+        :param file_content: String containing the URLs and output paths.
+        :return: Dictionary with output paths as keys and URLs as values.
+        """
+        if not file_content:
+            file_content = open_file(self.index_filename)
+
+        url_dict = {}
+        if file_content:
+            lines = file_content.strip().split('\n')
+            last_url = None
+            for line in lines:
+                line = line.strip()
+                if line.startswith('http://') or line.startswith('https://'):
+                    last_url = line
+                elif line.startswith('out=') and last_url is not None:
+                    out = line.split('=')[1].strip()
+                    url_dict[out] = {
+                        "url": last_url,
+                        "out": line
+                    }
+                    # url_dict[out] = line
+                    last_url = None
+                else:
+                    continue
+        return url_dict
+
+    def check_file(self, file_name, value):
+        full_path_file = f"{self.base_dir}/{file_name}"
+        is_ok_file_exists = os.path.exists(full_path_file)
+        is_ok_file_size = is_ok_file_checksum = True
+        this_checksum = this_file_size = None
+
+        if not is_ok_file_exists:
+            if self.debug:
+                pawn.console.log(f"[CHECK][NOT FOUND FILE] {full_path_file}")
+            self.set_result(file_name, "file_exists", False)
+            return False, this_file_size, this_checksum
+
+        this_file_size = self.get_file_size(full_path_file)
+        if this_file_size != value.get("file_size"):
+            if self.debug:
+                pawn.console.log(f"[CHECK][NOT MATCHED SIZE] {full_path_file}, {this_file_size} != {value.get('file_size')}")
+            is_ok_file_size = False
+
+        if self.check_method == "hash":
+            this_checksum = self.get_xxhash(full_path_file)
+            if this_checksum != value.get("checksum"):
+                if self.debug:
+                    pawn.console.log(f"[CHECK][NOT MATCHED HASH] {full_path_file}, {this_checksum} != {value.get('checksum')}")
+                is_ok_file_checksum = False
+
+        return is_ok_file_exists and is_ok_file_size and is_ok_file_checksum, this_file_size, this_checksum
+
     def check(self):
-        if isinstance(self.checksum_filename, dict):
-            self.indexed_file_dict = self.checksum_filename
-        else:
-            self.indexed_file_dict = self.open_json(self.checksum_filename)
+        self.url_dict = self.create_url_dict()
+        self.indexed_file_dict = self.open_json(self.checksum_filename) if not isinstance(self.checksum_filename, dict) else self.checksum_filename
+
         for file_name, value in self.indexed_file_dict.items():
-            # is_ok = True
-            is_ok_file_exists = True
-            is_ok_file_size = True
-            is_ok_file_checksum = True
+            is_ok, this_file_size, this_checksum = self.check_file(file_name, value)
+            message = f"{self.base_dir}/{file_name:<40}, is_file={is_ok}, size={is_ok}({this_file_size} / {value.get('file_size')}) checksum={is_ok}({this_checksum} / {value.get('checksum')})"
 
-            full_path_file = f"{self.base_dir}/{file_name}"
-            this_checksum = None
-            this_file_size = None
+            if self.debug:
+                pawn.console.log(message)
 
-            if not os.path.exists(full_path_file):
-                if self.debug:
-                    cprint(f"[CHECK][NOT FOUND FILE] {full_path_file}", "red")
-                is_ok_file_exists = False
-                self.set_result(full_path_file, "file_exists", False)
-
-            else:
-                this_file_size = self.get_file_size(full_path_file)
-                if this_file_size != value.get("file_size"):
-                    if self.debug:
-                        cprint(f"[CHECK][NOT MATCHED SIZE] {full_path_file}, {this_file_size} != {value.get('file_size')}, {value}",  "red")
-                    is_ok_file_size = False
-                    self.set_result(full_path_file, "size", False)
-
-                if self.check_method == "hash":
-                    this_checksum = self.get_xxhash(full_path_file)
-                    if this_checksum != value.get("checksum"):
-                        is_ok_file_checksum = False
-                        self.set_result(full_path_file, "checksum", False) # honam
-                        self.set_result(full_path_file, "checksum_hash", f'{this_checksum} /{value.get("checksum")}') # honam
-
-                        if self.debug:
-                            cprint(f"[CHECK][NOT MATCHED HASH] {full_path_file}, {this_checksum} != {value.get('checksum')}, {value}", "red")
-
-            message = f"{full_path_file}, file={is_ok_file_exists}, " \
-                      f"size={is_ok_file_size}({this_file_size} / {value.get('file_size')}) " \
-                      f"checksum={is_ok_file_checksum}({this_checksum} / {value.get('checksum')})"
-
-            if is_ok_file_exists and is_ok_file_size and is_ok_file_checksum:
-                if self.debug:
-                    cprint(f"[CHECK][OK] {message}", "green")
-            else:
-                cprint(f"[CHECK][ERROR] {message}", "red")
-
-        if self.result.get('error') and len(self.result['error']) > 0:
+        if self.result.get('error') and self.result['error']:
             self.result['status'] = "FAIL"
-            self.result['error']['date'] = f'{(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3])}' # honam
+            self.result['date'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         return self.result
 
     @staticmethod

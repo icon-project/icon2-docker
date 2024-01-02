@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 import os
 import re
 import sys
@@ -18,10 +17,11 @@ from datetime import datetime
 from multiprocessing.pool import ThreadPool
 
 from common import converter, output, base
-from common.converter import region_info as region_s3_info  # regeion config
-from common.converter import region_cf_info, todaydate  # regeion config
+from common.converter import region_info as region_s3_info  # region config
+from common.converter import region_cf_info, todaydate, get_size  # region config,
 from config.configure import Configure
-from .file_indexing import FileIndexer
+from manager.file_indexing import FileIndexer
+from pawnlib.output import is_file
 
 # sys.excepthook = output.exception_handler
 
@@ -76,15 +76,12 @@ def log_print(msg, color=None, level=None):
     output.cprint(f'[{now_time}] [{level:5}] | {msg}', color)
 
 
-# > Restore is a class that restores a database from a backup file
 class Restore:
     def __init__(self,
-                 region="kr",  # 사용안함
                  db_path=None,  # .settings.icon2.GOLOOP_NODE_DIR
                  network="MainNet",  # .settings.env.SERVICE
                  send_url=None,  # 사용자 입력   /  없어도무방   .settings.env.RESTORE_SEND_URL
                  bucket_name_prefix="icon2-backup",  # 사용자 입력(docker 변수로 ) 없을 경우 Default 사용  : false
-                 download_type="multi",  # 변경 필요 없음
                  download_path='restore',  # Download directory | 사용자 입력(docker 변수로) 없을 경우 defaut 사용  : false
                  download_url='download.solidwallet.io',  # Downlaod URL
                  download_url_type='s3',  # Download type check  s3 or cloud front , Default : s3
@@ -94,12 +91,12 @@ class Restore:
                  # False일 경우 동일 파일 비교 후 다를 경우 삭제 |  사용자 입력(docker 변수로 ) 없을 경우 default 사용  : false
                  ):
         """
-        :param region: 사용안함
+        Restore is a class that restores a database from a backup file
+
         :param db_path: .settings.icon2.GOLOOP_NODE_DIR
         :param network: .settings.env.SERVICE
         :param send_url: 사용자 입력 /없어도 무방   .settings.env.RESTORE_SEND_URL
         :param bucket_name_prefix: 사용자 입력(docker 변수로 ) 없을 경우 default 사용  : false
-        :param download_type:  변경 필요 없음
         :param download_path: Download directory | 사용자 입력(docker 변수로) 없을 경우 defaut 사용  : false
         :param download_url: Download URL
         :param download_url_type: Download type check  s3 or cloud front , Default : s3 download" or "file_list"
@@ -117,7 +114,6 @@ class Restore:
         self.url_addr = None
         self.s3_bkurl = None
 
-        self.region = region  # 사용안함
         self.db_path = db_path  # 필수 Default => icon2 : /app/goloop
         self.network = network  # 필수  Blockchain  node network name
         self.bucket_name_prefix = bucket_name_prefix  # 필수
@@ -125,7 +121,6 @@ class Restore:
         self.download_path = download_path  # Change variable name restore_path to download_path
         self.download_filename = ""
         self.download_url_type = download_url_type
-        self.download_type = download_type  # 사용안함
         self.download_force = download_force
         self.download_tool = download_tool  # Default axel
         self.download_option = download_option
@@ -160,30 +155,7 @@ class Restore:
         self.cpu_count = os.cpu_count()
         self.used_disk_max_percent = 70
 
-        self.run()
-
-    def run(self):
-        # Restore start.....
-        self._prepare()
-        self.cfg.logger.info(f"[RESTORE] DOWNLOAD_URL={self.download_url}, SERVICE={self.network}, "
-                             f"DOWNLOAD_URL_TYPE={self.download_url_type}, RESTORE_PATH={self.restore_path}")
-
-        self.download()
-        self.check_downloaded_file()
-
-        if self.checksum_result and self.checksum_result.get("status") == "FAIL":
-            self.cfg.logger.info("[RESTORE] Try the one more downloading")
-            self.create_db_redownload_list()   # add by hnsong (2022.08.25)
-            self.download(redownload=True)
-            self.check_downloaded_file()
-
-        if self.checksum_result.get("status") == "OK":
-            output.write_file(self.stored_local_path['restored_marks'], todaydate('ms'))
-        elif self.checksum_result.get("status") == "FAIL":
-            self.cfg.logger.error(f'[RESTORE] [ERROR] File checksum error : {self.checksum_result.get("status")}')
-            raise Exception("[RESTORE] [ERROR] File checksum error")
-
-    def _prepare(self):
+        # self.run()
         self.restore_path = os.path.join(self.db_path, self.download_path)
         self.create_directory(self.restore_path)
 
@@ -197,35 +169,156 @@ class Restore:
             "checksum_url": "",
             "re_download_list": f"{self.restore_path}/re_download_file_list.txt",
             "restored_marks": f"{self.restore_path}/RESTORED",
+            "retry_count": f"{self.restore_path}/RETRY",
             "restored_checksum_marks": f"{self.restore_path}/checksum_result.json"
         }
+        self.is_overwrite_file = False
+        self.retry_file_count = 0
+        self.max_retry_count = 10
 
+    def read_retry_count(self):
+        retry_count_path = self.stored_local_path["retry_count"]
+        return  self._read_retry_count(retry_count_path)
+
+    def log_restore_initiation(self):
+        """
+        Logs the initial information when the restore process starts.
+        """
+        self.cfg.logger.info(
+        f"[RESTORE] Initiation: DOWNLOAD_URL={self.download_url}, SERVICE={self.network}, "
+        f"DOWNLOAD_URL_TYPE={self.download_url_type}, RESTORE_PATH={self.restore_path}, "
+        f"Retry Allowed={self.check_if_in_max_retry()}, Current Retry Count={self.read_retry_count()}"
+    )
+
+    def is_first_download_attempt(self):
+        """
+        Checks if this is the first attempt to download the file.
+
+        :return: True if this is the first attempt, False otherwise.
+        """
+        return self.read_retry_count() == 0
+
+    def check_if_in_max_retry(self):
+        retry_count = self.read_retry_count()
+        if retry_count <= self.max_retry_count:
+            self.cfg.logger.info(f"Max retries reached: {retry_count}/{self.max_retry_count}")
+            return True
+        return False
+
+    def update_retry_count(self, success):
+        """
+        Updates the retry count based on the operation success.
+        Resets to 0 if successful, otherwise increments the count.
+
+        :param success: Boolean indicating the success of the operation.
+        """
+        retry_count_path = self.stored_local_path["retry_count"]
+
+        if success:
+            self._write_retry_count(retry_count_path, 0)
+        else:
+            current_count = self._read_retry_count(retry_count_path)
+            self._write_retry_count(retry_count_path, current_count + 1)
+
+    def _read_retry_count(self, path):
+        """
+        Reads the current retry count from a file.
+
+        :param path: Path to the file containing the retry count.
+        :return: The current retry count.
+        """
+        try:
+            with open(path, 'r') as file:
+                return int(file.read().strip())
+        except (FileNotFoundError, ValueError):
+            return 0  # Return 0 if the file does not exist or is empty
+
+    def _write_retry_count(self, path, count):
+        """
+        Writes the retry count to a file.
+
+        :param path: Path to the file where the retry count will be stored.
+        :param count: The retry count to write.
+        """
+        with open(path, 'w') as file:
+            file.write(str(count))
+
+    def run(self):
+        # Restore start.....
+        self._prepare()
+
+        self.cfg.logger.info(
+            f"[RESTORE] DOWNLOAD_URL={self.download_url}, SERVICE={self.network}, "
+            f"DOWNLOAD_URL_TYPE={self.download_url_type}, RESTORE_PATH={self.restore_path}, "
+            f"Retry={self.check_if_in_max_retry()}, retry_count={self.read_retry_count()}")
+
+
+        # if not self.check_if_in_max_retry():
+        if self.read_retry_count() == 0:
+            # 파일 다운로드 및 검증
+            self.cfg.logger.info("[RESTORE] Start First download")
+            self.update_retry_count(False)
+            # self.update_retry_count(False)
+            self.download()
+
+        # 에러가 있는 경우 재다운로드 진행
+        self.re_download_if_error()
+
+    def re_download_if_error(self):
+        self.check_downloaded_file()
+        self.cfg.logger.info(f"[RESTORE] checksum_result={self.checksum_result.get('status')}, retry_count={self.read_retry_count()}, self.check_if_in_max_retry()={self.check_if_in_max_retry()}")
+        if (self.checksum_result and self.checksum_result.get("status") == "FAIL") and self.check_if_in_max_retry():
+            self.update_retry_count(False)
+            self.cfg.logger.info("[RESTORE] Try the one more downloading")
+            self.create_db_redownload_list()   # add by hnsong (2022.08.25)
+            self.download(redownload=True)
+            self.check_downloaded_file()
+
+        if self.checksum_result.get("status") == "OK":
+            output.write_file(self.stored_local_path['restored_marks'], todaydate('ms'))
+        elif self.checksum_result.get("status") == "FAIL":
+            self.cfg.logger.error(f'[RESTORE] [ERROR] File checksum error : {self.checksum_result.get("status")}')
+            raise Exception("[RESTORE] [ERROR] File checksum error")
+
+    def _prepare(self):
         if self.already_restore_check():
             exit()
+        self.download_checksum_and_filelist()
 
+    def download_checksum_and_filelist(self):
         # Creating a list of the values in the log_files dictionary.
         delete_old_list = list(self.log_files.values())
         delete_old_list.append(self.stored_local_path['re_download_list'])
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+
         for old_file in delete_old_list:
             if output.is_file(old_file):
-                self.cfg.logger.info(f"[RESTORE] Exists file {old_file}, Delete a old file")
-                output.write_file(old_file, " ")
+                backup_file = f"{old_file}.{current_time}"
+                self.cfg.logger.info(f"[RESTORE] Backup successful: {old_file} to {backup_file}")
+                os.rename(old_file, backup_file)
 
-        download_info_url = f"{self.download_url}/{self.network}.json"
-        download_info_res = requests.get(download_info_url)
-        if download_info_res.status_code == 200:
-            download_info = download_info_res.json()
-            self.cfg.logger.info(f"[RESTORE] index_url={download_info.get('index_url')}")
-            self.cfg.logger.info(f"[RESTORE] checksum_url={download_info.get('checksum_url')}")
-            for url_name in ["index_url", "checksum_url"]:
-                self.download_write_file(url=download_info.get(url_name), path=self.restore_path)
-                self.stored_local_path[url_name] = self._get_file_locate(download_info.get(url_name))
+        if self.is_overwrite_file or \
+            not is_file(f"{self.restore_path}/checksum.json") or \
+            not is_file(f"{self.restore_path}/file_list.txt"):
+
+            download_info_url = f"{self.download_url}/{self.network}.json"
+            download_info_res = requests.get(download_info_url)
+            if download_info_res.status_code == 200:
+                download_info = download_info_res.json()
+                self.cfg.logger.info(f"[RESTORE] index_url={download_info.get('index_url')}")
+                self.cfg.logger.info(f"[RESTORE] checksum_url={download_info.get('checksum_url')}")
+                for url_name in ["index_url", "checksum_url"]:
+                    self.download_write_file(url=download_info.get(url_name), path=self.restore_path)
+                    self.stored_local_path[url_name] = self._get_file_locate(download_info.get(url_name))
+            else:
+                self.cfg.logger.error(f'[RESTORE] [ERROR] Invalid url or service name, url={download_info_res}, '
+                                      f'status={download_info_res.status_code}')
         else:
-            self.cfg.logger.error(f'[RESTORE] [ERROR] Invalid url or service name, url={download_info_res}, '
-                                  f'status={download_info_res.status_code}')
+            self.cfg.logger.info('[RESTORE] It will use the already existing files checksum.json and file_list.txt.')
+            self.stored_local_path['index_url'] = f"{self.restore_path}/file_list.txt"
+            self.stored_local_path['checksum_url'] = f"{self.restore_path}/checksum.json"
 
     def already_restore_check(self):
-
         restored_file = self.stored_local_path['restored_marks']
         checksum_result_file = self.stored_local_path['restored_checksum_marks']
         check_stat = None
@@ -234,64 +327,56 @@ class Restore:
             with open(checksum_result_file, 'r') as f:
                 check_stat = json.load(f)
 
-        if output.is_file(restored_file) and check_stat:
-            if check_stat.get('state') == 'OK':
-                self.cfg.logger.info(
-                    f"[RESTORE PASS] Already restored. If you want to start over, "
-                    f"delete the '{restored_file} & {checksum_result_file}' file."
-                )
-                self.cfg.logger.info(f"[RESTORE PASS] CHECKSUM RESULT CHECK is '{check_stat.get('state')}'")
-                self.script_exit = True
-            else:
-                self.cfg.logger.info(
-                    f"[RESTORE Again] It has already been restored, "
-                    f"But, The checksum result is '{check_stat.get('state')}', so DB download it again(ALL)."
-                )
-                self.script_exit = False
-        elif output.is_file(restored_file) and check_stat is None:
-            self.cfg.logger.info(
-                f"[RESTORE PASS] Already restored. If you want to start over, delete the '{restored_file}' file."
+        is_restored = output.is_file(restored_file)
+        is_checksum_ok = check_stat and check_stat.get('state') == 'OK'
+
+        def log_restore_status(message, script_exit):
+            self.cfg.logger.info(message)
+            self.script_exit = script_exit
+
+        renew_message = f"If you want to restore from a new snapshot, delete the  '{restored_file}' file and start again."
+        if is_restored and is_checksum_ok:
+            log_restore_status(
+                f"[RESTORE PASS] Already restored. is_restored={is_restored}, is_checksum_ok={is_checksum_ok}, {renew_message}.",
+                True
             )
-            self.cfg.logger.info(
-                f"[RESTORE PASS] There is no \"{checksum_result_file}\" file, "
-                f"But, There is \"{restored_file}\" file, so Restore PASS(SKIP)"
+        elif is_restored:
+            message = f"[RESTORE PASS] Already restored. is_restored={is_restored}, is_checksum_ok={is_checksum_ok}, {renew_message}"
+            if check_stat is None:
+                message += f" No '{checksum_result_file}' file found, but restore will be skipped."
+            log_restore_status(message, True)
+        elif is_checksum_ok:
+            log_restore_status(
+                f"[RESTORE PASS] No '{restored_file}' file found. CHECKSUM RESULT CHECK is 'OK'.",
+                True
             )
-            self.script_exit = True
-        elif not output.is_file(restored_file) and check_stat:
-            if check_stat.get('state') == 'OK':
-                self.cfg.logger.info(
-                    f"[RESTORE PASS] There is no \"{restored_file}\" file. "
-                    f"But, CHECKSUM RESULT CHECK is '{check_stat.get('state')}'"
-                )
-                self.script_exit = True
-            else:
-                self.cfg.logger.info(
-                    f"[RESTORE Again] There is no \"{restored_file}\" file , "
-                    f"And The CheckSum result is '{check_stat.get('state')}', so DB download it again(ALL)."
-                )
-                self.script_exit = False
         else:
-            self.cfg.logger.info(
-                f"[RESTORE][Start] The Restore DB Download (Not found file -> {restored_file}, {checksum_result_file})"
+            log_restore_status(
+                f"[RESTORE][Start] The Restore DB Download (Not found file -> {restored_file}, {checksum_result_file})",
+                False
             )
-            self.script_exit = False
 
         return self.script_exit
 
+
     def check_downloaded_file(self):
         self.checksum_result = {}
-        with open(self.log_files['download_error'], 'r') as file:
-            contents = file.read().strip()
-            if contents:
-                self.cfg.logger.error(f"[RESTORE] [ERROR] download_error.log\n\nE|{contents}\n")
+        if output.is_file(self.log_files['download_error']):
+            with open(self.log_files['download_error'], 'r') as file:
+                contents = file.read().strip()
+                if contents:
+                    self.cfg.logger.error(f"[RESTORE] [ERROR] download_error.log\n\nE|{contents}\n")
 
         self.cfg.logger.info(
-            f'[RESTORE] Base_dir = {self.db_path}, checksum_filename = {self.stored_local_path["checksum_url"]}'
+            f'[RESTORE] Base_dir = {self.db_path}, '
+            f'checksum_filename = {self.stored_local_path["checksum_url"]}, '
+            f'index_filename={self.stored_local_path["index_url"]}'
         )
 
         self.checksum_result = FileIndexer(
             base_dir=self.db_path,
             checksum_filename=self.stored_local_path['checksum_url'],
+            index_filename=self.stored_local_path['index_url'],
             debug=self.debug,
             check_method="hash",
             prefix="").check()
@@ -303,14 +388,18 @@ class Restore:
             if self.checksum_result.get("status") == "FAIL":
                 for file, result in self.checksum_result.get('error').items():
                     if file != 'date':
-                        url, output_path = self.get_file_url_info(file.replace("/data/", " ").split(' ')[-1])
-                        result['url'] = url
-                        result['out'] = output_path
+                        # url, output_path = self.get_file_url_info(file.replace("/data/", " ").split(' ')[-1])
+                        # # result['url'] = url
+                        # result['out'] = output_path
                         self.cfg.logger.error(f"[RESTORE][ERROR] {file}, {result}")
                         self.fail_result[file] = result
                 if len(self.fail_result) > 0:
                     self.fail_result['date'] = self.checksum_result.get('error').get('date')
                     self.fail_result['state'] = False
+                    # self.update_retry_count(False)
+                else:
+                    self.update_retry_count(True)
+
         self.create_checksum_result(status=self.checksum_result.get('status'))
 
     def get_file_url_info(self, file_name: str = ""):
@@ -359,22 +448,28 @@ class Restore:
         It reads a json file, and if the value of a key is a dictionary,
         it writes the key and the value of the dictionary to a text file
         """
+        self.retry_file_count = 0
         if output.is_file(self.stored_local_path['restored_checksum_marks']):
             with open(self.stored_local_path['restored_checksum_marks'], 'r') as f_json:
                 self.checksum_value = json.load(f_json)
 
         for file, value in self.checksum_value.items():
+            # print(file,value)
             if isinstance(value, dict):
-                print(value)
                 with open(self.stored_local_path['re_download_list'], 'a') as f:
+                    self.retry_file_count += 1
                     f.write(f"{value.get('url')}\n")
                     f.write(f"\t{value.get('out')}\n")
+
+        _re_download_list = self.stored_local_path['re_download_list']
+
+        if output.is_file(_re_download_list):
+            self.cfg.logger.info(f"'{_re_download_list}' has been successfully created.  size={get_size(_re_download_list)}, file_count={self.retry_file_count}")
 
     def fail_file_delete(self):
         """
         It reads a json file, and deletes all the files listed in the json file
         """
-        # fail_check_file_list = None
         with open(self.stored_local_path['restored_checksum_marks']) as f:
             fail_check_file_list = json.load(f)
 
@@ -433,7 +528,7 @@ class Restore:
             cmd_opt = f'-V -j10 -x8 --http-accept-gzip --disk-cache=64M -c ' \
                       f'{_default_cmd_opt}'
 
-        self.cfg.logger.info(f"download command option : '{cmd_opt}'")
+        self.cfg.logger.info(f"[RESTORE] Command option : '{cmd_opt}'")
 
         if self.download_url_type == "indexing":
             total_file_count = len(output.open_json(self.stored_local_path['checksum_url']))
@@ -448,7 +543,6 @@ class Restore:
                 self.cfg.logger.info(f"[RESTORE] DOWNLOAD TOTAL_FILE_COUNT = {total_file_count}")
                 cmd = f"aria2c -i {self.stored_local_path['index_url']} -d {self.db_path} {cmd_opt}"
 
-            # self.cfg.logger.info(f'[RESTORE][CMD] {cmd}')
             command_result = base.run_execute(
                 cmd=cmd,
                 capture_output=False,
@@ -505,7 +599,7 @@ class Restore:
                     url=self.config['SLACK_WH_URL'],
                     msg_text=Restore.result_formatter(completed_msg),
                     title='Restore',
-                    msg_level='error'
+                    msg_level='info'
                 )
         except Exception as e:
             self.cfg.logger.error(f"[RESTORE] [ERROR] send_slack {e}")
@@ -619,7 +713,7 @@ class Restore:
 
         return self.f_dict, self.dl_url
 
-    def dir_free_size(self, path: str = ""):
+    def get_directory_usage_ratio(self, path: str = ""):
         total, used, free = shutil.disk_usage(path)
         dir_size = self.get_dir_size(path)
         # 남은 공간 대비 db 디렉토리 사용량 (퍼센트)
@@ -658,13 +752,13 @@ class Restore:
                 raise ValueError(f"[RESTORE] [ERROR] .{line_info()} | Not enough disk "
                                  f"- Download size : {dl_total_size} Byte , Disk Free Size : {p_free} Byte")
         else:
-            dir_usage = self.dir_free_size(self.db_path)
+            directory_usage_ratio = self.get_directory_usage_ratio(self.db_path)
             # dir size free size check
-            if dir_usage > self.used_disk_max_percent:
-                self.send_slack(f"[RESTORE] [ERROR] Not enough disk space : {dir_usage:.2f}", "error")
-                raise ValueError(f"[RESTORE] [ERROR] Not enough disk : {dir_usage:.2f}")
+            if directory_usage_ratio > self.used_disk_max_percent:
+                self.send_slack(f"[RESTORE] [ERROR] Not enough disk space : {directory_usage_ratio:.2f}", "error")
+                raise ValueError(f"[RESTORE] [ERROR] Not enough disk : {directory_usage_ratio:.2f}")
             else:
-                self.cfg.logger.info(f"[RESTORE] You have enough disk space : {dir_usage:.2f} % ")
+                self.cfg.logger.info(f"[RESTORE] You have enough disk space : {directory_usage_ratio:.2f} % ")
 
         # Download force delete ( Old Backup File Delete)
         if self.download_force:
@@ -928,7 +1022,7 @@ def main():
         download_url=download_url,
         download_tool=download_tool,
         download_url_type=download_url_type
-    )
+    ).run()
 
 
 if __name__ == '__main__':
