@@ -59,7 +59,6 @@ class ConfigureSetter:
             self.cfg.logger.info(write_file(f'{keysecret_filename}', keysecret_passwd))
             wallet = WalletLoader(f"{self.config_dir}/{keystore_filename}", keysecret_passwd, keysecret_filename)
             wallet.get_wallet()
-
             self.cfg.logger.info(f"Already keystore file - {keystore_filename}")
 
     def create_genesis_json(self, ):

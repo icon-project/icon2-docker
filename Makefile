@@ -76,15 +76,19 @@ ifeq ($(MAKECMDGOALS) , bash)
 	NTP_REFRESH_TIME:="30"
 	MAIN_TIME_OUT:="30"
 	ROLE:=3
-	GOLOOP_CONSOLE_LEVEL:="trace"
-	GOLOOP_LOG_LEVEL:="trace"
-	LOG_OUTPUT_TYPE:="console"
+# 	GOLOOP_CONSOLE_LEVEL:="warn"
+	GOLOOP_LOG_LEVEL:="debug"
+	LOG_OUTPUT_TYPE:="split"
 	KEY_PASSWORD:="testtest"
 	USE_HEALTH_CHECK:="false"
 	CTX_LEVEL:="debug"
 	DOWNLOAD_OPTION:="-V -j10 -x16 --http-accept-gzip --disk-cache=64M -c "
-#	GOLOOP_NODE_SOCK:="/goloop/cli.sock"
-#	GOLOOP_EE_SOCKET:="/goloop/ee.sock"
+#     GOLOOP_LOG_WRITER_FILENAME:="/goloop/logs/goloop.log"
+#     GOLOOP_LOG_WRITER_COMPRESS:="true"
+#     GOLOOP_LOG_WRITER_LOCALTIME:="true"
+#     GOLOOP_LOG_WRITER_MAXAGE:="0"
+#     GOLOOP_LOG_WRITER_MAXSIZE:="1024"
+#     GOLOOP_LOG_WRITER_MAXBACKUPS:="7"
 
 endif
 

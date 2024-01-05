@@ -16,11 +16,6 @@ from pawnlib.output import open_file, open_json
 from pawnlib.config import pawn
 
 
-
-# def get_public_ip():
-#     return requests.get("http://checkip.amazonaws.com").text.strip()
-
-
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -209,7 +204,6 @@ class FileIndexer:
                         "url": last_url,
                         "out": line
                     }
-                    # url_dict[out] = line
                     last_url = None
                 else:
                     continue
@@ -232,6 +226,7 @@ class FileIndexer:
             if self.debug:
                 pawn.console.log(f"[CHECK][NOT MATCHED SIZE] {full_path_file}, {this_file_size} != {value.get('file_size')}")
             is_ok_file_size = False
+            self.set_result(file_name, "size", False)
 
         if self.check_method == "hash":
             this_checksum = self.get_xxhash(full_path_file)
@@ -239,13 +234,14 @@ class FileIndexer:
                 if self.debug:
                     pawn.console.log(f"[CHECK][NOT MATCHED HASH] {full_path_file}, {this_checksum} != {value.get('checksum')}")
                 is_ok_file_checksum = False
+                self.set_result(file_name, "checksum", False)
+                self.set_result(file_name, "checksum_hash", f'{this_checksum} /{value.get("checksum")}')
 
         return is_ok_file_exists and is_ok_file_size and is_ok_file_checksum, this_file_size, this_checksum
 
     def check(self):
         self.url_dict = self.create_url_dict()
         self.indexed_file_dict = self.open_json(self.checksum_filename) if not isinstance(self.checksum_filename, dict) else self.checksum_filename
-
         for file_name, value in self.indexed_file_dict.items():
             is_ok, this_file_size, this_checksum = self.check_file(file_name, value)
             message = f"{self.base_dir}/{file_name:<40}, is_file={is_ok}, size={is_ok}({this_file_size} / {value.get('file_size')}) checksum={is_ok}({this_checksum} / {value.get('checksum')})"

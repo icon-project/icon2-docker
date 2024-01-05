@@ -8,6 +8,8 @@ import requests
 import socket
 
 from common.logger import CustomLog as CL
+import logging
+from logging.handlers import TimedRotatingFileHandler
 from common import converter
 from termcolor import cprint
 from devtools import debug
@@ -221,6 +223,8 @@ class Configure:
             level=log_level.upper()
         )
         logger.set_level(log_level.upper())
+        logger.error_file_handler(f"{self.log_dir}/error.log")
+
         return logger
 
     def _base_env(self, ):

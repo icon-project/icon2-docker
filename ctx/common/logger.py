@@ -53,10 +53,10 @@ class CustomLog:
         > "CRITICAL" : logging.CRITICAL ,
         :return:
         """
-        streamHandler = logging.StreamHandler()
-        streamHandler.setLevel(self.levels[level])
-        streamHandler.setFormatter(self.formatter)
-        self.log.addHandler(streamHandler)
+        _stream_handler = logging.StreamHandler()
+        _stream_handler.setLevel(self.levels[level])
+        _stream_handler.setFormatter(self.formatter)
+        self.log.addHandler(_stream_handler)
         return self.log
 
     def file_handler(self, file_name, mode):
@@ -70,10 +70,10 @@ class CustomLog:
         > "CRITICAL" : logging.CRITICAL ,
         :return:
         """
-        fileHandler = logging.FileHandler(file_name, mode=mode)
-        fileHandler.setLevel(logging.DEBUG)
-        fileHandler.setFormatter(self.formatter)
-        self.log.addHandler(fileHandler)
+        _file_handler = logging.FileHandler(file_name, mode=mode)
+        _file_handler.setLevel(logging.DEBUG)
+        _file_handler.setFormatter(self.formatter)
+        self.log.addHandler(_file_handler)
         return self.log
 
     def file_rotating_handler(self, file_name, mode, level, backup_count, log_max_size):
@@ -91,14 +91,14 @@ class CustomLog:
         :return:
         """
 
-        fileHandler = logging.handlers.RotatingFileHandler(
+        _file_handler = logging.handlers.RotatingFileHandler(
             filename=file_name,
             maxBytes=log_max_size,
             backupCount=backup_count,
             mode=mode)
-        fileHandler.setLevel(self.levels[level])
-        fileHandler.setFormatter(self.formatter)
-        self.log.addHandler(fileHandler)
+        _file_handler.setLevel(self.levels[level])
+        _file_handler.setFormatter(self.formatter)
+        self.log.addHandler(_file_handler)
         return self.log
 
     def time_rotate_handler(self,
@@ -116,15 +116,27 @@ class CustomLog:
         :param atTime: datetime.time(0, 0, 0)
         :return:
         """
-        fileHandler = logging.handlers.TimedRotatingFileHandler(
+        _file_handler = logging.handlers.TimedRotatingFileHandler(
             filename=filename,
             when=when,  # W0
             backupCount=backup_count,
             interval=interval,
             atTime=atTime)
-        fileHandler.setLevel(self.levels[level])
-        fileHandler.setFormatter(self.formatter)
-        self.log.addHandler(fileHandler)
+        _file_handler.setLevel(self.levels[level])
+        _file_handler.setFormatter(self.formatter)
+        self.log.addHandler(_file_handler)
+        return self.log
+
+    def error_file_handler(self, file_name):
+        """
+        오직 ERROR 레벨 로그를 위한 파일 핸들러 설정
+        :param file_name: 로그 파일명 (예: 'error.log')
+        :return: 로거 객체
+        """
+        _file_handler = logging.FileHandler(file_name, mode='a')
+        _file_handler.setLevel(logging.ERROR)  # ERROR 레벨 설정
+        _file_handler.setFormatter(self.formatter)
+        self.log.addHandler(_file_handler)
         return self.log
 
 

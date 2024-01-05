@@ -20,13 +20,33 @@ if [[ "$ONLY_GOLOOP" == "True" || "$ONLY_GOLOOP" == "true" ]]; then
     exit;
 fi
 
-logging "Start goloop server (${LOG_OUTPUT_TYPE}, ${BASE_DIR}, ${GOLOOP_CONFIG})"
+logging "Start goloop server (LOG_OUTPUT_TYPE=${LOG_OUTPUT_TYPE}, BASE_DIR=${BASE_DIR}, GOLOOP_CONFIG=${GOLOOP_CONFIG}) "
 
 if [[ "$LOG_OUTPUT_TYPE" == "file" ]]; then
-#    goloop server start 2>&1 >> ${LOGFILE}
     goloop server start 2>> ${LOGFILE}
+
+elif [[ "$LOG_OUTPUT_TYPE" == "split" ]]; then
+    : ${GOLOOP_LOG_WRITER_FILENAME:="/goloop/logs/goloop.log"}
+    : ${GOLOOP_LOG_LEVEL:="debug"}
+    : ${GOLOOP_CONSOLE_LEVEL:="warn"}
+    : ${GOLOOP_LOG_WRITER_COMPRESS:="true"}
+    : ${GOLOOP_LOG_WRITER_LOCALTIME:="true"}
+    : ${GOLOOP_LOG_WRITER_MAXAGE:="0"}
+    : ${GOLOOP_LOG_WRITER_MAXSIZE:="1024"}
+    : ${GOLOOP_LOG_WRITER_MAXBACKUPS:="7"}
+
+    if [[ ${GOLOOP_CONSOLE_LEVEL} != "warn" && ${GOLOOP_CONSOLE_LEVEL} != "error" ]]; then
+        logging "GOLOOP_CONSOLE_LEVEL=${GOLOOP_CONSOLE_LEVEL}. It is recommended to use the 'warn' or 'error' in 'split' log mode" "warn"
+        GOLOOP_CONSOLE_LEVEL=warn
+        logging "Forcefully sets GOLOOP_CONSOLE_LEVEL to 'warn'." "warn"
+    fi
+
+    logging "Splitting output to log files '${GOLOOP_LOG_WRITER_FILENAME}', '${ERROR_LOGFILE}', GOLOOP_LOG_LEVEL=${GOLOOP_LOG_LEVEL}, GOLOOP_CONSOLE_LEVEL=${GOLOOP_CONSOLE_LEVEL}"
+    goloop server start >>${ERROR_LOGFILE} 2>&1
+
 elif [[ "$LOG_OUTPUT_TYPE" == "debug" ]]; then
     goloop server start
+
 else
     goloop server start 2>&1 | tee -a ${LOGFILE}
 fi
