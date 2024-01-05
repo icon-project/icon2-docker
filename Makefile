@@ -125,21 +125,24 @@ TEST_FILES := $(shell find tests -name '*.yml')
 .PHONY: all build push test tag_latest release ssh bash
 
 all: build_goloop_base build remove_goloop_base_image
+build_push: build_goloop_base build remove_goloop_base_image push
 hub: push_hub tag_latest
 version:
-	@echo $(VERSION)
+	@echo $(ECHO_OPTION) $(VERSION)
 
-print_version:
+print_version: check_duplicate_vars
 	@echo $(ECHO_OPTION) "$(OK_COLOR) VERSION-> $(VERSION)  REPO-> $(REPO_HUB)/$(NAME):$(TAGNAME) $(NO_COLOR) IS_LOCAL: $(IS_LOCAL)"
 
 check_duplicate_vars:
 	@echo "Checking for duplicate environment variable definitions..."
-	@$(foreach var,$(shell sed 's/=.*//' .env), \
+	@$(foreach var,$(sort $(shell sed 's/=.*//' .env)), \
 		$(if $(findstring $(var),$(.VARIABLES)), \
-			echo "$(ERROR_COLOR) ** WARNING: Variable $(var) is defined in both the Makefile and .env! Makefile value will be used.$(NO_COLOR)";))
+			echo $(ECHO_OPTION) "$(WARN_COLOR) ** WARNING: Variable $(var) is defined in Makefile with value: $(shell grep ^$(var)= .env | cut -d'=' -f2)'$(NO_COLOR)"; \
+		) \
+	)
 
 
-make_debug_mode:
+make_debug_mode: check_duplicate_vars
 	@$(shell echo $(ECHO_OPTION) "$(OK_COLOR) ----- DEBUG Environment ----- $(MAKECMDGOALS)  \n $(NO_COLOR)" >&2)\
 		$(shell echo "" > DEBUG_ARGS) \
 			$(foreach V, \
@@ -154,7 +157,7 @@ make_debug_mode:
 				)\
 			)
 
-make_build_args:
+make_build_args: check_duplicate_vars
 	@$(shell echo $(ECHO_OPTION) "$(OK_COLOR) ----- Build Environment ----- \n $(NO_COLOR)" >&2)\
 	   $(shell echo "" > BUILD_ARGS) \
 		$(foreach V, \
@@ -174,14 +177,14 @@ test:   make_build_args print_version
 
 changeconfig: make_build_args
 		@CONTAINER_ID=$(shell docker run -d $(REPO_HUB)/$(NAME):$(TAGNAME)) ;\
-		 echo "COPY TO [$$CONTAINER_ID]" ;\
+		 echo $(ECHO_OPTION) "COPY TO [$$CONTAINER_ID]" ;\
 		 docker cp "src/." "$$CONTAINER_ID":/src/ ;\
 		 docker exec -it "$$CONTAINER_ID" sh -c "echo `date +%Y-%m-%d:%H:%M:%S` > /.made_day" ;\
-		 echo "COMMIT [$$CONTAINER_ID]" ;\
+		 echo $(ECHO_OPTION) "COMMIT [$$CONTAINER_ID]" ;\
 		 docker commit -m "Change the configure files `date`" "$$CONTAINER_ID" $(REPO_HUB)/$(NAME):$(TAGNAME) ;\
-		 echo "STOP [$$CONTAINER_ID]" ;\
+		 echo $(ECHO_OPTION) "STOP [$$CONTAINER_ID]" ;\
 		 docker stop "$$CONTAINER_ID" ;\
-		 echo "CLEAN UP [$$CONTAINER_ID]" ;\
+		 echo $(ECHO_OPTION)  "CLEAN UP [$$CONTAINER_ID]" ;\
 		 docker rm "$$CONTAINER_ID"
 
 
@@ -230,7 +233,7 @@ else
 HOTFIX_BASE_IMAGE=${BASE_IMAGE}
 endif
 
-hotfix: hotfix_prepare
+hotfix: make_build_args hotfix_prepare
 		$(call colorecho, "It will be create a hotfix docker image.")
 		$(call colorecho, "'${HOTFIX_BASE_IMAGE}-hotfix' using base image '${HOTFIX_BASE_IMAGE}'")
 		docker build --build-arg HOTFIX_BASE_IMAGE=$(HOTFIX_BASE_IMAGE) -f Dockerfile.hotfix -t $(HOTFIX_BASE_IMAGE)-hotfix .
@@ -293,7 +296,7 @@ f_bash: make_debug_mode check_duplicate_vars print_version
 
 
 list:
-		@echo "$(OK_COLOR) Tag List - $(REPO_HUB)/$(NAME) $(NO_COLOR)"
+		@echo  $(ECHO_OPTION) "$(OK_COLOR) Tag List - $(REPO_HUB)/$(NAME) $(NO_COLOR)"
 		@curl -s  https://registry.hub.docker.com/v2/repositories/$(REPO_HUB)/$(NAME)/tags | jq --arg REPO "$(REPO_HUB)/$(NAME):" -r '.=("\($$REPO)"+.results[].name)'
 		$(call colorecho, "-- END --")
 
