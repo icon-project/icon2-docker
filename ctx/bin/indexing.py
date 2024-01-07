@@ -71,7 +71,8 @@ def main():
     else:
         debug = False
 
-    print(args)
+    pawn.console.log(args)
+    pawn.console.log(f"checksum_file={args.checksum_file}")
 
     file_indexer = FileIndexer(
         base_dir=args.dir,

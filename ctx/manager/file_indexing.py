@@ -252,6 +252,7 @@ class FileIndexer:
         if self.result.get('error') and self.result['error']:
             self.result['status'] = "FAIL"
             self.result['date'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            self.result['total_size'] = sum(file.get('file_size', 0) for file in self.indexed_file_dict.values())
         return self.result
 
     @staticmethod
