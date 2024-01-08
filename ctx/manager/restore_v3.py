@@ -281,44 +281,66 @@ class Restore:
             raise Exception("[RESTORE] [ERROR] File checksum error")
 
     def _prepare(self):
-        if self.already_restore_check():
+        if self.check_restore_completion_status():
             exit()
         self.download_checksum_and_filelist()
 
     def download_checksum_and_filelist(self):
-        # Creating a list of the values in the log_files dictionary.
-        delete_old_list = list(self.log_files.values())
-        delete_old_list.append(self.stored_local_path['re_download_list'])
+        self.backup_old_log_and_list_files()
+        self.download_required_files()
+
+    def backup_old_log_and_list_files(self):
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        for old_file in self.get_log_and_list_files():
+            self.backup_file_if_exists(old_file, current_time)
 
-        for old_file in delete_old_list:
-            if output.is_file(old_file):
-                backup_file = f"{old_file}.{current_time}"
-                self.cfg.logger.info(f"[RESTORE] Backup successful: {old_file} to {backup_file}")
-                os.rename(old_file, backup_file)
+    def get_log_and_list_files(self):
+        return list(self.log_files.values()) + [self.stored_local_path['re_download_list']]
 
-        if self.is_overwrite_file or \
-            not is_file(f"{self.restore_path}/checksum.json") or \
-            not is_file(f"{self.restore_path}/file_list.txt"):
+    def backup_file_if_exists(self, file_path, timestamp):
+        if output.is_file(file_path):
+            backup_file = f"{file_path}.{timestamp}"
+            # Copy the content to the backup file
+            shutil.copy2(file_path, backup_file)
+            self.cfg.logger.info(f"[RESTORE] Backup successful: {file_path} to {backup_file}")
 
-            download_info_url = f"{self.download_url}/{self.network}.json"
-            download_info_res = requests.get(download_info_url)
-            if download_info_res.status_code == 200:
-                download_info = download_info_res.json()
-                self.cfg.logger.info(f"[RESTORE] index_url={download_info.get('index_url')}")
-                self.cfg.logger.info(f"[RESTORE] checksum_url={download_info.get('checksum_url')}")
-                for url_name in ["index_url", "checksum_url"]:
-                    self.download_write_file(url=download_info.get(url_name), path=self.restore_path)
-                    self.stored_local_path[url_name] = self._get_file_locate(download_info.get(url_name))
-            else:
-                self.cfg.logger.error(f'[RESTORE] [ERROR] Invalid url or service name, url={download_info_res}, '
-                                      f'status={download_info_res.status_code}')
+            # Truncate the original file
+            with open(file_path, 'r+') as original_file:
+                original_file.truncate(0)
+
+    def download_required_files(self):
+        if self.should_download_new_files():
+            self.download_info_files()
         else:
-            self.cfg.logger.info('[RESTORE] It will use the already existing files checksum.json and file_list.txt.')
+            self.cfg.logger.info('[RESTORE] Using existing checksum.json and file_list.txt.')
             self.stored_local_path['index_url'] = f"{self.restore_path}/file_list.txt"
             self.stored_local_path['checksum_url'] = f"{self.restore_path}/checksum.json"
 
-    def already_restore_check(self):
+    def should_download_new_files(self):
+        return self.is_overwrite_file or \
+            not is_file(f"{self.restore_path}/checksum.json") or \
+            not is_file(f"{self.restore_path}/file_list.txt")
+
+    def download_info_files(self):
+        download_info_url = f"{self.download_url}/{self.network}.json"
+        download_info_response = requests.get(download_info_url)
+
+        if download_info_response.status_code == 200:
+            download_info = download_info_response.json()
+            self.download_and_store_info_files(download_info)
+        else:
+            error_msg = f'[RESTORE] Invalid URL or service name, url={download_info_url}, status={download_info_response.status_code}'
+            self.cfg.logger.error(error_msg)
+            raise ValueError(error_msg)
+
+    def download_and_store_info_files(self, download_info):
+        self.cfg.logger.info(f"[RESTORE] index_url={download_info.get('index_url')}")
+        self.cfg.logger.info(f"[RESTORE] checksum_url={download_info.get('checksum_url')}")
+        for url_key in ["index_url", "checksum_url"]:
+            self.download_write_file(url=download_info.get(url_key), path=self.restore_path)
+            self.stored_local_path[url_key] = self._get_file_locate(download_info.get(url_key))
+
+    def check_restore_completion_status(self):
         restored_file = self.stored_local_path['restored_marks']
         checksum_result_file = self.stored_local_path['restored_checksum_marks']
         check_stat = None
@@ -357,7 +379,6 @@ class Restore:
             )
 
         return self.script_exit
-
 
     def check_downloaded_file(self):
         self.checksum_result = {}
