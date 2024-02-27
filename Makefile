@@ -1,6 +1,6 @@
 REPO_HUB = iconloop
 NAME = icon2-node
-VERSION = v1.3.13
+VERSION = v1.4.0
 NTP_VERSION = ntp-4.2.8p15
 IS_LOCAL = true
 BASE_IMAGE = goloop-icon
@@ -27,6 +27,10 @@ endif
 
 ifdef service
 SERVICE = $(service)
+endif
+
+ifdef branch
+BRANCH := $(branch)
 endif
 
 ifdef VERSION_ARG
@@ -122,7 +126,7 @@ endif
 
 TEST_FILES := $(shell find tests -name '*.yml')
 
-.PHONY: all build push test tag_latest release ssh bash
+.PHONY: all build push test tag_latest release ssh bash check-branch
 
 all: build_goloop_base build remove_goloop_base_image
 build_push: build_goloop_base build remove_goloop_base_image push
@@ -140,7 +144,6 @@ check_duplicate_vars:
 			echo $(ECHO_OPTION) "$(WARN_COLOR) ** WARNING: Variable $(var) is defined in Makefile with value: $(shell grep ^$(var)= .env | cut -d'=' -f2)'$(NO_COLOR)"; \
 		) \
 	)
-
 
 make_debug_mode: check_duplicate_vars
 	@$(shell echo $(ECHO_OPTION) "$(OK_COLOR) ----- DEBUG Environment ----- $(MAKECMDGOALS)  \n $(NO_COLOR)" >&2)\
@@ -187,6 +190,16 @@ changeconfig: make_build_args
 		 echo $(ECHO_OPTION)  "CLEAN UP [$$CONTAINER_ID]" ;\
 		 docker rm "$$CONTAINER_ID"
 
+check-branch:
+ifndef BRANCH
+	$(error BRANCH is undefined)
+endif
+		@if git show-ref --verify --quiet refs/remotes/origin/$(BRANCH); then \
+				echo "Branch '$(BRANCH)' found on remote. Checking out..."; \
+				git checkout $(BRANCH) || git checkout -b $(BRANCH) origin/$(BRANCH); \
+		else \
+				echo "Branch '$(BRANCH)' not found on remote."; \
+		fi
 
 change_version:
 		$(call colorecho, "-- Change Goloop Version ${VERSION} --")
