@@ -22,25 +22,24 @@ class InitManager:
         self.print_banner()
         self.print_resources()
         self.cfg.logger.info("[INIT_CONFIG] Initializing Configuration")
-        self._send_slack("Starting Node")
+        self.send_slack("Starting Node")
         self.print_config()
+
+        self.cs.create_directory_structure()
         self.check_fs_permissions()
-
         self.cs.check_server_environment_prepare()
-
         self.cs.create_yaml_file()
         self.cs.create_env_file()
-        self.cs.make_base_dir()
         self.cs.create_key()
         self.cs.create_genesis_json()
         self.cs.create_gs_zip()
         self.cs.create_icon_config()
-        self.cs.create_db()
+        self.cs.initialize_database()
         self.cfg.logger.info("----- Finish initializing ---")
         # self.cs.validate_env()
 
     def print_config(self):
-        self._print_dict_items(self.cfg.base_env, "[INIT_CONFIG]")
+        self.print_dict_items(self.cfg.base_env, "[INIT_CONFIG]")
 
         ip_type = self._check_ip_type()
         self.cfg.logger.info(f"[INIT_CONFIG] GOLOOP_P2P = \"{self.cfg.config['GOLOOP_P2P']}\" ({ip_type})")
@@ -55,14 +54,22 @@ class InitManager:
                 if config_key in ctx_config and len(ctx_config[config_key]):
                     ctx_config[config_key] = '*' * len(str(ctx_config[config_key]))
 
-            self._print_dict_items(dict_obj=ctx_config, prefix="[CTX]")
-            self._print_dict_items(dict_obj=goloop_config, prefix="[GOLOOP]")
+            self.print_dict_items(dict_obj=ctx_config, prefix="[CTX]")
+            self.print_dict_items(dict_obj=goloop_config, prefix="[GOLOOP]")
 
-    def _print_dict_items(self, dict_obj, prefix):
+    @staticmethod
+    def format_dict_value_with_type(value):
+        if isinstance(value, str):
+            return f"\"{value}\" ({type(value).__name__})"
+        else:
+            return f"{value} ({type(value).__name__})"
+
+    def print_dict_items(self, dict_obj, prefix):
         for key, value in dict_obj.items():
-            self.cfg.logger.info(f"{prefix} {key} = {value} ({type(value).__name__})")
+            value_str = self.format_dict_value_with_type(value)
+            self.cfg.logger.info(f"{prefix} {key} = {value_str}")
 
-    def _send_slack(self, title="", msg_level='info'):
+    def send_slack(self, title="", msg_level='info'):
         try:
             send_slack(
                 url=self.cfg.config['SLACK_WH_URL'],
@@ -96,7 +103,6 @@ class InitManager:
         if is_permission:
             self.cfg.logger.info(f"{prefix_log} All file system permission checks passed.")
         else:
-            # self.cfg.logger.error(f"{prefix_error_log} One or more file system permission checks failed.")
             self.cfg.handle_value_error(f"{prefix_log} One or more file system permission checks failed.")
 
     def check_can_write_to_directory(self, directory, prefix=""):
