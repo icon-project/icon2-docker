@@ -6,6 +6,7 @@ import requests
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.configure import Configure as CFG
+from common.exception import SeedConnectionError, ConfigException
 from common.icon2 import WalletLoader
 from common.output import is_file, write_file, write_json, write_yaml, dump
 from manager.restore_v3 import Restore
@@ -187,14 +188,14 @@ class ConfigureSetter:
         for seed in seeds:
             if not net.check_port(seed):
                 exception_messages.append(seed)
-                self.cfg.handle_value_error(f"Failed to connect to the server. seed={seed}")
+                self.cfg.handle_value_error(f"Failed to connect to the server. seed={seed}", SeedConnectionError)
         if len(exception_messages) >= len(seeds) > 0:
-            self.cfg.handle_value_error(f"Cannot connect to Seed Servers 👉 {exception_messages}")
+            self.cfg.handle_value_error(f"Cannot connect to Seed Servers 👉 {exception_messages}", SeedConnectionError)
 
     def check_role(self):
         allows_roles = [0, 1, 3]
         if self.config.get('ROLE') not in allows_roles:
-            self.cfg.handle_value_error(f"Invalid ROLE, role={self.config.get('ROLE')}, allows={allows_roles}")
+            self.cfg.handle_value_error(f"Invalid ROLE, role={self.config.get('ROLE')}, allows={allows_roles}", ConfigException)
 
     def validate_environment(self):
         mandatory_env_keys = ["KEY_PASSWORD"]
@@ -203,7 +204,7 @@ class ConfigureSetter:
             self.cfg.logger.debug(f"Validate environment {env_key}={env_value}")
             if not os.getenv(env_key):
                 # self.logger.error(f"There is no password. Requires '{key}' environment.")
-                self.cfg.handle_value_error(f"There is no '{env_key}'. Requires '{env_key}' environment. {env_key}='{env_value}'")
+                self.cfg.handle_value_error(f"There is no '{env_key}'. Requires '{env_key}' environment. {env_key}='{env_value}'", ConfigException)
 
     @log_method_call
     def check_server_environment_prepare(self):

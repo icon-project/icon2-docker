@@ -8,6 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.configure import Configure as CFG
 from config.configure_setter import ConfigureSetter as CS
 from common import resources
+from common.exception import FileSystemException
 from pawnlib.utils.notify import send_slack
 from pawnlib.config import pawn
 
@@ -103,7 +104,7 @@ class InitManager:
         if is_permission:
             self.cfg.logger.info(f"{prefix_log} All file system permission checks passed.")
         else:
-            self.cfg.handle_value_error(f"{prefix_log} One or more file system permission checks failed.")
+            self.cfg.handle_value_error(f"{prefix_log} One or more file system permission checks failed.", FileSystemException)
 
     def check_can_write_to_directory(self, directory, prefix=""):
         """
@@ -116,7 +117,7 @@ class InitManager:
         if os.access(directory, os.W_OK):
             return True
         else:
-            self.cfg.handle_value_error(f"{prefix} Can't write to directory '{directory}'")
+            self.cfg.handle_value_error(f"{prefix} Can't write to directory '{directory}'", FileSystemException)
             return False
 
     def check_can_create_socket(self, socket_path, prefix=""):
@@ -135,14 +136,14 @@ class InitManager:
             try:
                 os.remove(socket_path)
             except OSError as e:
-                self.cfg.handle_value_error(f"{prefix} Cannot remove existing file at '{socket_path}': {str(e)}")
+                self.cfg.handle_value_error(f"{prefix} Cannot remove existing file at '{socket_path}': {str(e)}", FileSystemException)
                 return False
 
         try:
             server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             server.bind(socket_path)
             if not os.path.exists(socket_path):
-                self.cfg.handle_value_error(f"{prefix} Socket file '{socket_path}' was not created.")
+                self.cfg.handle_value_error(f"{prefix} Socket file '{socket_path}' was not created.", FileSystemException)
                 return False
 
             server.close()
@@ -151,7 +152,7 @@ class InitManager:
             # pawn.console.log("[red] Created socket")
             return True
         except OSError as e:
-            self.cfg.handle_value_error(f"{prefix} Cannot create a socket at {socket_path}: {str(e)}")
+            self.cfg.handle_value_error(f"{prefix} Cannot create a socket at {socket_path}: {str(e)}", FileSystemException)
             return False
 
     def check_file_access(self, file_path, prefix=""):
@@ -169,7 +170,7 @@ class InitManager:
                 pass
             return True
         except OSError as e:
-            self.cfg.handle_value_error(f"{prefix} Cannot access {file_path}: {str(e)}")
+            self.cfg.handle_value_error(f"{prefix} Cannot access {file_path}: {str(e)}", FileSystemException)
             return False
 
     def print_banner(self):

@@ -10,7 +10,7 @@ import socket
 from common.logger import CustomLog as CL
 import logging
 from logging.handlers import TimedRotatingFileHandler
-from common import converter
+from common import converter, exception
 from termcolor import cprint
 from devtools import debug
 from pawnlib.typing import Null
@@ -339,9 +339,10 @@ class Configure:
         for _env in env_variable_keys:
             self.config[_env] = os.getenv(_env, None)
 
-    def handle_value_error(self, exception_message=""):
+    # def handle_value_error(self, exception_message=""):
+    def handle_value_error(self, exception_message="", exception_class=ValueError):
         if self.base_env.get('ENABLE_VALIDATION'):
-            raise ValueError(exception_message)
+            raise exception_class(exception_message)
         else:
             self.logger.error(f"[ERROR]{exception_message} / ENABLE_VALIDATION={self.base_env.get('ENABLE_VALIDATION')}")
 

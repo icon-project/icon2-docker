@@ -1,6 +1,6 @@
 REPO_HUB = iconloop
 NAME = icon2-node
-VERSION = v1.4.0
+VERSION = v1.4.1
 NTP_VERSION = ntp-4.2.8p15
 IS_LOCAL = true
 BASE_IMAGE = goloop-icon
@@ -65,28 +65,28 @@ DOCKER_BUILD_OPTION = --no-cache --rm=true
 endif
 
 ifeq ($(MAKECMDGOALS) , bash)
-	DOWNLOAD_URL:="https://networkinfo.solidwallet.io/info"
-	DOWNLOAD_URL_TYPE:="indexing"
+	DOWNLOAD_URL ?="https://networkinfo.solidwallet.io/info"
+	DOWNLOAD_URL_TYPE ?="indexing"
 #	SEEDS:="20.20.6.86:7100"
 #	AUTO_SEEDS:=True
 #	SERVICE:=MainNet
-	SERVICE:=BerlinNet
+	SERVICE ?=BerlinNet
 #	CC_DEBUG:="true"
-	IS_AUTOGEN_CERT:=true
-    PRIVATE_KEY_FILENAME:="YOUR_KEYSTORE_FILENAME.der"
-    NGINX_THROTTLE_BY_IP_VAR:="\$$binary_remote_addr"
-	LOCAL_TEST:="false"
+	IS_AUTOGEN_CERT ?=true
+    PRIVATE_KEY_FILENAME ?="YOUR_KEYSTORE_FILENAME.der"
+    NGINX_THROTTLE_BY_IP_VAR ?="\$$binary_remote_addr"
+	LOCAL_TEST ?="false"
 #	FASTEST_START:="true"
-	NTP_REFRESH_TIME:="30"
-	MAIN_TIME_OUT:="30"
-	ROLE:=3
+	NTP_REFRESH_TIME ?="30"
+	MAIN_TIME_OUT ?="30"
+	ROLE ?=3
 # 	GOLOOP_CONSOLE_LEVEL:="warn"
-	GOLOOP_LOG_LEVEL:="debug"
-	LOG_OUTPUT_TYPE:="split"
-	KEY_PASSWORD:="testtest"
-	USE_HEALTH_CHECK:="false"
-	CTX_LEVEL:="debug"
-	DOWNLOAD_OPTION:="-V -j10 -x16 --http-accept-gzip --disk-cache=64M -c "
+	GOLOOP_LOG_LEVEL ?="debug"
+	LOG_OUTPUT_TYP ?="split"
+	KEY_PASSWORD ?="testtest"
+	USE_HEALTH_CHECK ?="false"
+	CTX_LEVEL ?= "debug"
+	DOWNLOAD_OPTION ?="-V -j10 -x16 --http-accept-gzip --disk-cache=64M -c "
 #     GOLOOP_LOG_WRITER_FILENAME:="/goloop/logs/goloop.log"
 #     GOLOOP_LOG_WRITER_COMPRESS:="true"
 #     GOLOOP_LOG_WRITER_LOCALTIME:="true"
@@ -141,7 +141,7 @@ check_duplicate_vars:
 	@echo "Checking for duplicate environment variable definitions..."
 	@$(foreach var,$(sort $(shell sed 's/=.*//' .env)), \
 		$(if $(findstring $(var),$(.VARIABLES)), \
-			echo $(ECHO_OPTION) "$(WARN_COLOR) ** WARNING: Variable $(var) is defined in Makefile with value: $(shell grep ^$(var)= .env | cut -d'=' -f2)'$(NO_COLOR)"; \
+			echo $(ECHO_OPTION) "$(WARN_COLOR) ** WARNING: Variable $(var) is defined in Makefile with value: '$(shell grep ^$(var)= .env | cut -d'=' -f2)'$(NO_COLOR)"; \
 		) \
 	)
 
@@ -296,7 +296,7 @@ tag_latest: print_version
 		docker push $(REPO_HUB)/$(NAME):latest
 
 
-bash: make_debug_mode check_duplicate_vars print_version
+bash: make_debug_mode  print_version
 	docker run  $(shell cat DEBUG_ARGS) -p 9000:9000 -p 7100:7100 -it -v $(PWD)/config:/goloop/config -v ${PWD}/s6:/s6-int \
 		-v $(PWD)/logs:/goloop/logs -v $(PWD)/ctx:/ctx -v $(PWD)/data:/goloop/data -e VERSION=$(TAGNAME) -v $(PWD)/src:/src --entrypoint /bin/bash \
 		--name $(NAME)-makefile --cap-add SYS_TIME --rm $(REPO_HUB)/$(NAME):$(TAGNAME)

@@ -16,6 +16,7 @@ import time
 import timeit
 import unittest.runner
 import itertools
+from pawnlib.output import print_syntax
 
 
 # class DockerComposeExecutor(object):
@@ -49,6 +50,7 @@ class ContainerTestCase(unittest.TestCase):
     image_version = None
     service = None
     version = None
+    tag_name = None
     seed_domain = None
 
     is_debug = False
@@ -235,7 +237,11 @@ class ContainerTestCase(unittest.TestCase):
         self.docker_compose_execute("up", "-d")
 
         if wait:
-            self.log_point("Wait for container")
+            self.log_point(f"Wait for container.  image={self.image_version}, container={self.compose_service_name}, service={self.service}")
+
+            docker_compose_content = yaml.dump_all([self.docker_compose_content])
+            print_syntax(docker_compose_content, "yaml")
+
             self._wait_until_responsive(
                 timeout=30,
                 pause=1,
@@ -314,8 +320,11 @@ class ContainerTestCase(unittest.TestCase):
             self.service = self.make_args.get("SERVICE", "MainNet")
         if not self.version:
             self.version = self.make_args.get("VERSION")
+        if not self.tag_name:
+            self.tag_name = self.make_args.get("TAGNAME")
+
         if not self.image_version:
-            self.image_version = f"{self.make_args.get('REPO_HUB')}/{self.make_args.get('NAME')}:{self.version}"
+            self.image_version = f"{self.make_args.get('REPO_HUB')}/{self.make_args.get('NAME')}:{self.tag_name}"
         if not self.seed_domain:
             self.seed_domain = self.get_seed_domain()
         if self.make_args.get("DEBUG"):
