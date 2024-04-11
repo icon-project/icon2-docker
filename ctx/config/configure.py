@@ -8,12 +8,9 @@ import requests
 import socket
 
 from common.logger import CustomLog as CL
-import logging
-from logging.handlers import TimedRotatingFileHandler
 from common import converter, exception
 from termcolor import cprint
 from devtools import debug
-from pawnlib.typing import Null
 from pawnlib.utils.notify import send_slack, send_slack_token
 from pawnlib.config import pawn
 from pawnlib.typing import str2bool, is_valid_ipv4
@@ -42,6 +39,8 @@ class Configure:
             "GOLOOP_CPUPROFILE": "cpu.profile",
             "GOLOOP_MEMPROFILE": "mem.profile"
         }
+        self.major_base_keys = ["SERVICE", "USE_HEALTH_CHECK",  "USE_NTP_SYNC"]
+        self.major_config_keys = ["CID", "ROLE", "CHECK_BLOCK_STACK", "CHECK_INTERVAL", "CHECK_PEER_STACK", "CHECK_STACK_LIMIT", "CHECK_TIMEOUT"]
         self.base_env = self._base_env()
         self.log_dir = f"{self.base_env['BASE_DIR']}/logs"
         if not os.path.isdir(self.log_dir):
@@ -98,25 +97,21 @@ class Configure:
             debug({
                 'type': type(exception).__name__,
                 'message': str(exception),
-                'trace': trace
+                'trace': trace[-2:]
             })
 
     def export_major_config(self):
-        _major_base_keys = ["SERVICE", "USE_HEALTH_CHECK",  "USE_NTP_SYNC"]
-        _major_config_keys = ["CID", "ROLE", "CHECK_BLOCK_STACK", "CHECK_INTERVAL", "CHECK_PEER_STACK", "CHECK_STACK_LIMIT", "CHECK_TIMEOUT"]
         _cfg_config = {}
 
-        for key in _major_base_keys:
+        for key in self.major_base_keys:
             _cfg_config[key] = self.base_env.get(key)
 
-        for key in _major_config_keys:
+        for key in self.major_config_keys:
             _cfg_config[key] = self.config.get(key)
 
         return _cfg_config
 
     def load_offline_config(self):
-        _major_base_keys = ["SERVICE", "USE_HEALTH_CHECK",  "USE_NTP_SYNC"]
-        _major_config_keys = ["CID", "ROLE", "CHECK_BLOCK_STACK", "CHECK_INTERVAL", "CHECK_PEER_STACK", "CHECK_STACK_LIMIT", "CHECK_TIMEOUT"]
         _env_keys = ["SLACK_WH_URL"]
 
         _major_config = {

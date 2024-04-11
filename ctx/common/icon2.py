@@ -48,7 +48,8 @@ def get_preps(endpoint):
     try:
         res = requests.post(
             url=f"{endpoint}/api/v3",
-            json=payload
+            json=payload,
+            timeout=15
         )
         if res.status_code == 200:
             return res.json()
@@ -61,7 +62,8 @@ def get_preps(endpoint):
 def get_inspect(endpoint, cid):
     try:
         res = requests.get(
-            url=f"{endpoint}/admin/chain/{cid}"
+            url=f"{endpoint}/admin/chain/{cid}",
+            timeout=15
         )
         if res.status_code == 200:
             return_res = res.json()

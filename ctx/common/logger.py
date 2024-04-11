@@ -5,6 +5,7 @@ from logging import handlers
 import datetime
 from rich.console import Console
 from rich.logging import RichHandler
+import functools
 
 
 class CustomLog:
@@ -138,6 +139,21 @@ class CustomLog:
         _file_handler.setFormatter(self.formatter)
         self.log.addHandler(_file_handler)
         return self.log
+
+
+def log_method_call(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+
+        func_code = func.__code__
+        func_file = func_code.co_filename
+        func_line_no = func_code.co_firstlineno
+        func_name = func.__name__
+
+        self.cfg.logger.info(f"Start {func_name}() at {func_file}:{func_line_no}")
+        result = func(self, *args, **kwargs)
+        return result
+    return wrapper
 
 
 if __name__ == '__main__':

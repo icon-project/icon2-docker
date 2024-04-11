@@ -36,6 +36,8 @@ def main():
         for log_file in cfg.config.get('DOCKER_LOG_FILES').split(','):
             cfg.loggers[log_file] = cfg.init_logger(log_file, 'debug')
 
+        cfg.logger.info("Initializing chain process initiated.")
+
         cfg.logger = cfg.get_logger('chain.log')
         cfg.logger.info("Start ChainInit()")
 

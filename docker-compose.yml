@@ -1,7 +1,7 @@
 version: '3'
 services:
   icon2-node:
-    image: 'iconloop/icon2-node:v1.3.9'
+    image: 'iconloop/icon2-node:v1.4.1'
     restart: "on-failure"
     container_name: "icon2-node"
     network_mode: "host"

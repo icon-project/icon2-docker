@@ -68,8 +68,8 @@ class UpdateType:
                         env_value = self.check_value_type(env_value, required_type.get('type'), key=env_key)
                         self.logging(f"[Update] {env_key} = '{env_value}' ({required_type.get('type')})")
                         self.return_result[env_key] = env_value
-                    else:
-                        self.logging(f"Undefined key: '{env_key}', value:'{env_value}'", "error")
+                    # else:
+                    #     self.logging(f"Undefined key: '{env_key}', value:'{env_value}'", "error")
 
     @staticmethod
     def is_type_dict(value):

@@ -12,21 +12,22 @@ from common.output import is_file, write_file, write_json, write_yaml, dump
 from manager.restore_v3 import Restore
 from pawnlib.resource import net
 import functools
+from common.logger import log_method_call
 
 
-def log_method_call(func):
-    @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
-
-        func_code = func.__code__
-        func_file = func_code.co_filename
-        func_line_no = func_code.co_firstlineno
-        func_name = func.__name__
-
-        self.cfg.logger.info(f"Start {func_name}() at {func_file}:{func_line_no}")
-        result = func(self, *args, **kwargs)
-        return result
-    return wrapper
+# def log_method_call(func):
+#     @functools.wraps(func)
+#     def wrapper(self, *args, **kwargs):
+#
+#         func_code = func.__code__
+#         func_file = func_code.co_filename
+#         func_line_no = func_code.co_firstlineno
+#         func_name = func.__name__
+#
+#         self.cfg.logger.info(f"Start {func_name}() at {func_file}:{func_line_no}")
+#         result = func(self, *args, **kwargs)
+#         return result
+#     return wrapper
 
 
 class ConfigureSetter:
@@ -185,12 +186,19 @@ class ConfigureSetter:
     def check_seed_servers(self):
         seeds = self.config.get('SEEDS').split(',')
         exception_messages = []
+        alive_seed = False
+
         for seed in seeds:
             if not net.check_port(seed):
                 exception_messages.append(seed)
-                self.cfg.handle_value_error(f"Failed to connect to the server. seed={seed}", SeedConnectionError)
-        if len(exception_messages) >= len(seeds) > 0:
-            self.cfg.handle_value_error(f"Cannot connect to Seed Servers 👉 {exception_messages}", SeedConnectionError)
+            else:
+                alive_seed = True
+
+        if alive_seed and exception_messages:
+            self.cfg.logger.error(f"Some seed servers could not be reached: {exception_messages}")
+
+        elif not alive_seed:
+            self.cfg.handle_value_error(f"Cannot connect to any Seed Servers 👉 {exception_messages}", SeedConnectionError)
 
     def check_role(self):
         allows_roles = [0, 1, 3]

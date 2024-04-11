@@ -11,7 +11,7 @@ GOLOOP_BUILD_CMD = "goloop-icon-image"
 
 ifneq ("$(wildcard .env)","")
 include .env
-export $(shell sed 's/=.*//' .env| cut -d= -f1)
+export $(shell sed 's/=.*//' .env | grep -v ^\#)
 endif
 
 ifeq ($(DEBUG)$(debug), true)
@@ -82,7 +82,7 @@ ifeq ($(MAKECMDGOALS) , bash)
 	ROLE ?=3
 # 	GOLOOP_CONSOLE_LEVEL:="warn"
 	GOLOOP_LOG_LEVEL ?="debug"
-	LOG_OUTPUT_TYP ?="split"
+	LOG_OUTPUT_TYPE ?="split"
 	KEY_PASSWORD ?="testtest"
 	USE_HEALTH_CHECK ?="false"
 	CTX_LEVEL ?= "debug"
