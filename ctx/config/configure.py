@@ -6,6 +6,7 @@ import json
 import yaml
 import requests
 import socket
+import time
 
 from common.logger import CustomLog as CL
 from common import converter, exception
@@ -282,18 +283,13 @@ class Configure:
                         if os.getenv(compose_env, '__NOT_DEFINED__') != '__NOT_DEFINED__':
                             self.config['settings']['env'][compose_env] = self.get_os_env(compose_env)
                         else:
-                            pass
-                    self.config['settings']['env'].update(self.base_env)
-                    # [icon2]
-                    icon2_envs = [env for env in self.config['reference'].get('env').keys() if env.startswith("GOLOOP")]
-                    for icon2_env in icon2_envs:
-                        self.config['settings']['env'][icon2_env] = self.get_os_env(icon2_env)
-                    self.config['settings']['env']['GOLOOP_NODE_DIR'] = os.path.join(self.base_env['BASE_DIR'], 'data')
-                    self.set_second_env(self.config['settings']['env']['GOLOOP_NODE_DIR'])
-                    # [keystore]
-                    key_store_filename = self.config['settings']['env'].get("KEY_STORE_FILENAME", None)
-                    if key_store_filename:
-                        self.config['settings']['env']['GOLOOP_KEY_STORE'] = f"{self.config['settings']['env']['BASE_DIR']}/config/{key_store_filename}"
+                            retry_count += 1
+                            if retry_count < max_retries:
+                                delay = base_delay * (2 ** (retry_count - 1))  # 지수 백오프 계산
+                                self.logger.warning(f"No env found. Waiting {delay} seconds before retry ({retry_count}/{max_retries})...")
+                                time.sleep(delay)
+                                continue
+                            self.logger.error('No env.')
                     else:
                         self.config['settings']['env']['GOLOOP_KEY_STORE'] = os.getenv('GOLOOP_KEY_STORE')
                     # [network]
