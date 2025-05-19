@@ -9,6 +9,14 @@ Install Docker Engine: [Install Docker Engine](https://docs.docker.com/engine/in
 Install Docker Compose: [Install Docker Compose](https://docs.docker.com/compose/install/) <br>
 Official Docker Image:  `iconloop/icon2-node`
 
+![Docker Pulls](https://img.shields.io/docker/pulls/iconloop/icon2-node)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/iconloop/icon2-node/latest)
+
+![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/iconloop/icon2-node/latest?logo=icon&label=Production)
+
+![Docker Image Version (latest semver)](https://img.shields.io/docker/v/iconloop/icon2-node?logo=icon&label=Development)
+
+
 
 ```
 System Requirements 
@@ -106,26 +114,29 @@ The directories(data, config, icon, logs …) are created by docker engine, but 
 
 ## Docker environments settings
 
-| Name               | default                | type | required | description                                                                      |
-|--------------------|------------------------|------|----------|----------------------------------------------------------------------------------|
-| SERVICE            | MainNet                | str  | false    | Service Name - (MainNet, LisbonNet, BerlinNet)                                   |
-| ROLE               | 0                      | int  | true     | Role of running node. 0: Citizen, 3: P-Rep                                       |
-| CONFIG_URL         |                        | str  | false    |                                                                                  |
-| CONFIG_URL_FILE    | default_configure.json | str  | false    |                                                                                  |
-| CONFIG_LOCAL_FILE  | configure.json         | str  | false    |                                                                                  |
-| IS_AUTOGEN_CERT    | false                  | bool | false    | Automatically generate certificates                                              |
-| FASTEST_START      | false                  | bool | false    | Download snapshot DB                                                             |
-| KEY_STORE_FILENAME | keystore.json          | str  | true     | keystore.json file name                                                          |
-| KEY_PASSWORD       |                        | str  | true     | password of keystore.json file                                                   |
-| USE_NTP_SYNC       | True                   | bool | false    | Whether to use NTP in container                                                  |
-| NTP_SERVER         |                        | str  | false    | NTP Server                                                                       |
-| NTP_REFRESH_TIME   |                        | int  | false    | ntp refresh time                                                                 |
-| SLACK_WH_URL       |                        | str  | false    | slack web hook url - If a problem occurs, you can receive an alarm with a slack. |
-| USE_HEALTH_CHECK   | True                   | bool | false    | Whether to use health check                                                      |
-| CHECK_TIMEOUT      | 10                     | int  | false    | sec - TIMEOUT when calling REST API for monitoring                               |
-| CHECK_PEER_STACK   | 6                      | int  | false    | sec - Stack value to check the peer for monitoring.                              |
-| CHECK_BLOCK_STACK  | 10                     | int  | false    | sec - Stack value to check the block for monitoring.                             |
-| CHECK_INTERVAL     | 10                     | int  | false    | sec - check interval for monitoring                                              |
-| CHECK_STACK_LIMIT  | 360                    | int  | false    | count - count- Restart container when stack value is reached                     |
-| GOLOOP_LOG_LEVEL   | debug                  | str  | false    | Log Level - (trace,debug,info,warn,error,fatal,panic                             |       
-| LOG_OUTPUT_TYPE    | file                   | str  | false    | sec - check interval for monitoring                                              |
+| Name               | default                | type | required | description                                                                                                                                                                                                      |
+|--------------------|------------------------|------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| SERVICE            | MainNet                | str  | false    | Service Name - (MainNet, LisbonNet, BerlinNet)                                                                                                                                                                   |
+| ROLE               | 0                      | int  | true     | Role of running node. 0: Citizen, 3: P-Rep                                                                                                                                                                       |
+| CONFIG_URL         |                        | str  | false    |                                                                                                                                                                                                                  |
+| CONFIG_URL_FILE    | default_configure.json | str  | false    |                                                                                                                                                                                                                  |
+| CONFIG_LOCAL_FILE  | configure.json         | str  | false    |                                                                                                                                                                                                                  |
+| IS_AUTOGEN_CERT    | false                  | bool | false    | Automatically generate certificates                                                                                                                                                                              |
+| FASTEST_START      | false                  | bool | false    | Download snapshot DB                                                                                                                                                                                             |
+| KEY_STORE_FILENAME | keystore.json          | str  | true     | keystore.json file name                                                                                                                                                                                          |
+| KEY_PASSWORD       |                        | str  | true     | password of keystore.json file                                                                                                                                                                                   |
+| USE_NTP_SYNC       | True                   | bool | false    | Whether to use NTP in container                                                                                                                                                                                  |
+| NTP_SERVER         |                        | str  | false    | NTP Server                                                                                                                                                                                                       |
+| NTP_REFRESH_TIME   |                        | int  | false    | ntp refresh time                                                                                                                                                                                                 |
+| SLACK_WH_URL       |                        | str  | false    | slack web hook url - If a problem occurs, you can receive an alarm with a slack.                                                                                                                                 |
+| USE_HEALTH_CHECK   | True                   | bool | false    | Whether to use health check                                                                                                                                                                                      |
+| ENABLE_VALIDATION   | True                   | bool | false    | Whether to use validation, If set to "false," it will proceed even if the validation fails.                                                                                                                      |
+| CHECK_TIMEOUT      | 10                     | int  | false    | sec - TIMEOUT when calling REST API for monitoring                                                                                                                                                               |
+| CHECK_PEER_STACK   | 6                      | int  | false    | sec - Stack value to check the peer for monitoring.                                                                                                                                                              |
+| CHECK_BLOCK_STACK  | 10                     | int  | false    | sec - Stack value to check the block for monitoring.                                                                                                                                                             |
+| CHECK_INTERVAL     | 10                     | int  | false    | sec - check interval for monitoring                                                                                                                                                                              |
+| CHECK_STACK_LIMIT  | 360                    | int  | false    | count - count- Restart container when stack value is reached                                                                                                                                                     |
+| GOLOOP_LOG_LEVEL   | debug                  | str  | false    | Log Level for goloop - (trace,debug,info,warn,error,fatal,panic                                                                                                                                                  |       
+| CTX_LEVEL      | info                   | str  | false    | Log Level for CTX - (debug,info,warn)                                                                                                                                                                            |
+| LOG_OUTPUT_TYPE    | file                   | str  | false    | These settings are for categorizing goloop logs by type. When set to "split," only goloop errors are stored in the "error.log" file. Setting it to "debug" outputs all logs to the console. (file, split, debug) |
+

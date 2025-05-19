@@ -27,7 +27,7 @@ from common.converter import region_cf_info                    ### regeion confi
 
 sys.excepthook = output.exception_handler
 
-## SSL Warnning 
+## SSL Warnning
 base.disable_ssl_warnings()
 
 filename = __file__
@@ -35,24 +35,24 @@ get_filename = filename.split('/')[-1]
 
 def line_info(return_type=None):
     '''
-       common/output.py 안에 추가 할 예정 
-       추가 할 경우  import 필요 
+       common/output.py 안에 추가 할 예정
+       추가 할 경우  import 필요
        from common.output import line_info
        - line number 및 fucntion 위치를 출력하기 위함
     '''
     ### line number
     cf = inspect.currentframe()
     linenumber = cf.f_back.f_lineno
-    
+
     ### Call to Function name
     func_name = cf.f_back.f_code.co_name
-    
+
     ### file name
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
     #filename = module.__file__
     #get_filename = filename.split('/')[-1]
-    
+
     if return_type == 'filename':
         result_info = f'{get_filename}'
     elif return_type == 'function' or return_type == 'func_name' or return_type == 'f_name':
@@ -63,7 +63,7 @@ def line_info(return_type=None):
         result_info = f'{get_filename}({func_name}.{linenumber})'
     else:
         result_info = f'{get_filename}({func_name}.{linenumber})'
-    
+
     return result_info
 
 def log_print(msg, color=None, level=None):
@@ -78,7 +78,7 @@ def log_print(msg, color=None, level=None):
 
 
 class Restore:
-    def __init__(self, 
+    def __init__(self,
         region="kr",                              ### 사용안함
         db_path=None,                             ### .settings.icon2.GOLOOP_NODE_DIR
         network="MainNet",                        ### .settings.env.SERVICE
@@ -95,7 +95,7 @@ class Restore:
         self.region = region                            ### 사용안함
         self.db_path = db_path                          # 필수 Default => icon2 : /app/goloop
         self.network = network                          # 필수  Blockchain  node network name
-        self.bucket_name_prefix = bucket_name_prefix    # 필수 
+        self.bucket_name_prefix = bucket_name_prefix    # 필수
 
         self.download_path = download_path              # Change variable name restore_path to download_path
         self.download_filename = ""
@@ -103,37 +103,37 @@ class Restore:
         self.download_url_type = download_url_type
         self.download_type = download_type              ### 사용안함
         self.download_force = download_force
-        self.download_tool = download_tool              ####  Default axel 
+        self.download_tool = download_tool              ####  Default axel
         self.verbose = None
 
-        ### Send url check 
+        ### Send url check
         self.send_url = send_url                        ### 없어도 무방
         if send_url:
             self.is_send = True
         else:
             self.is_send = False
 
-        ##  Icon2 node DB Path check 
+        ##  Icon2 node DB Path check
         if self.db_path is None or not output.is_file(self.db_path):
             raise ValueError(f"-- {line_info()} | | db_path not found - '{self.db_path}'")
 
-        self.get_nproc = ''.join(base.run_execute('nproc', capture_output=True)['stdout'])    
+        self.get_nproc = ''.join(base.run_execute('nproc', capture_output=True)['stdout'])
 
-        ### disk usage check percent 
+        ### disk usage check percent
         self.diskcheck_per = 70
 
         self.run()
 
     ####  class main run function
     def run(self):
-        ### running start time check 
+        ### running start time check
         run_start_time = default_timer()
 
         ## Downlaod(Restore) WorkDir Create
         self.restore_path = os.path.join(self.db_path, self.download_path)
-        self.createDirectory(self.restore_path)  
+        self.createDirectory(self.restore_path)
 
-        ####  S3 또는 Cloudfront URL check 
+        ####  S3 또는 Cloudfront URL check
         self.download_url_type_check()
 
         ## fastest region check
@@ -150,17 +150,17 @@ class Restore:
         log_print(f'++ {line_info()} | index file url => {index_download_url}','grey')
 
         ## dl , download   url_addr == self.dl_url
-        self.dl_dict, self.url_addr = self.get_filelist(index_download_url)        
+        self.dl_dict, self.url_addr = self.get_filelist(index_download_url)
 
         ### CID & Disk free size check & as_Download BackupFile Delete
         self.run_prejob(self.dl_dict)
-        
+
         ## Backup file download
         self.get_bkfile(self.url_addr, self.dl_dict)
 
         self.db_file_decompress()
 
-        ### Finished time check 
+        ### Finished time check
         run_elapsed = default_timer() - run_start_time
         run_time_completed_at = "{:5.3f}s".format(run_elapsed)
         log_print(f"\n\n>>>> for_time_completed_at = {run_time_completed_at}\n", 'yellow')
@@ -181,7 +181,7 @@ class Restore:
         except OSError:
             raise OSError(f"-- {line_info()} | Error: Creating directory fail. : {dir_name}")
 
-    def download_url_type_check(self):        
+    def download_url_type_check(self):
         if self.download_url_type == 's3' or self.download_url_type is None:
             self.dl_url = f'https://{self.bucket_name_prefix}_regioncode.amazonaws.com'
             self.region_info = region_s3_info
@@ -207,9 +207,9 @@ class Restore:
 
     ### Check fast aws region
     def find_fastest_region(self):
-        ## worker Thread Setting 
-        worker_thread_cnt = 8 
-        pool = ThreadPool(worker_thread_cnt) 
+        ## worker Thread Setting
+        worker_thread_cnt = 8
+        pool = ThreadPool(worker_thread_cnt)
 
         results = {}
         i = 0
@@ -276,7 +276,7 @@ class Restore:
         return  self.f_dict, self.dl_url
 
     def run_prejob(self, dl_info):
-        ### chain id check 
+        ### chain id check
         if 'CID' in dl_info:
             chain_id = dl_info['CID']
             del_dir_list = ['contract','db', 'wal', 'genesis.zip']
@@ -285,7 +285,7 @@ class Restore:
                self.as_file_remove(dellist, file_opt=False)
             del dl_info['CID']
 
-        ### free disk size check 
+        ### free disk size check
         if 'Total_size' in dl_info:
             total, used, p_free = shutil.disk_usage(self.db_path)
             DL_Total_Size = dl_info['Total_size'].split(' ')[0]
@@ -313,7 +313,7 @@ class Restore:
                     os.remove(os.path.join(dl_path,delfile))
 
 
-    def get_bkfile(self, get_url, dl_info):           
+    def get_bkfile(self, get_url, dl_info):
         ### backup file download
         for f_url, cksum_value in dl_info.items():
             download_url = f'{get_url}/{f_url}'
@@ -338,7 +338,7 @@ class Restore:
             log_print(f'{thread}', 'red')
             if thread is not mainThread:
                 thread.join()
-        log_print(f"++ {line_info()} | Download job finished", 'green')        
+        log_print(f"++ {line_info()} | Download job finished", 'green')
 
     ##  파일 다운로드
     def file_download(self, download_url, download_path, hash_value):
@@ -347,7 +347,7 @@ class Restore:
         try :
             local_dl_file = os.path.join(download_path, download_url.split("/")[-1])
 
-            ## Old Download file Delete check 
+            ## Old Download file Delete check
             if self.download_force:
                 if os.path.isfile(local_dl_file):
                     log_print(f'>>> delete |    {local_dl_file}', 'red')
@@ -460,7 +460,7 @@ class Restore:
 
         ### 이전  디렉토리로  변경
         os.chdir(old_run_path)
-        
+
 
     ####### <<<<<<
 
@@ -526,7 +526,7 @@ def main():
         db_path = os.path.join(base_dir, default_db_path)
 
 
-    ### Restore Options 
+    ### Restore Options
     ### network  =  MainNet | SejongNet ....
     # network = env_config['SERVICE']  if env_config.get('SERVICE') else compose_env_config['SERVICE']
     # restore_path = env_config['RESTORE_PATH']  if env_config.get('RESTORE_PATH') else compose_env_config['RESTORE_PATH']
@@ -560,7 +560,7 @@ def main():
         download_url=download_url,
         download_tool=download_tool,
         download_url_type=download_url_type
-    )
+    ).run()
 
 if __name__ == '__main__' :
     main()

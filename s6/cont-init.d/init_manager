@@ -7,7 +7,7 @@ cd /ctx
 python3 init_manager.py
 
 if [[ $? != 0 ]]; then
-    logging "[init_manager] abnormal terminated. shutting down container"
+    logging "[init_manager] abnormal terminated. shutting down container" "error"
     s6-svscanctl -t /var/run/s6/services
     sleep 5
 fi

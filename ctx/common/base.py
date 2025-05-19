@@ -5,6 +5,7 @@ import sys
 import json
 import string
 import random
+import re
 import requests
 import time
 import subprocess
@@ -16,6 +17,24 @@ from config.configure import Configure as CFG
 from ffcount import ffcount
 
 cfg = CFG()
+
+# import asyncio
+# class AsyncRunner:
+#     def __init__(self, command_list=[]):
+#         self.command_list = command_list
+#
+#     def run(self):
+#         asyncio.run(self.run_managers())
+#
+#     def push_command(self, command=None):
+#         if command:
+#             self.command_list.append(command)
+#
+#     async def run_managers(self):
+#         print("Running AsyncRunner")
+#         if isinstance(self.command_list, list):
+#             print(self.command_list)
+#             await asyncio.wait(self.command_list)
 
 
 class cd:
@@ -123,7 +142,8 @@ def write_logging(**kwargs):
     if kwargs.get('log_filename'):
         log_file_name = kwargs['log_filename']
 
-    log_message = f"[{kwargs.get('line_no')}]{converter.todaydate('ms')}, {kwargs.get('line')}"
+    log_message = clear_ansi_escape_sequences(f"[{kwargs.get('line_no')}]{converter.todaydate('ms')}, {kwargs.get('line')}")
+    log_message = remove_hex_color_codes(log_message)
 
     if kwargs.get("line_no") % 100 == 0:
         file_count_string = ""
@@ -135,6 +155,16 @@ def write_logging(**kwargs):
     logfile = open(log_file_name, "a+")
     logfile.write(f"{log_message} \n")
     logfile.close()
+
+
+def clear_ansi_escape_sequences(text):
+    ansi_escape = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', text)
+
+
+def remove_hex_color_codes(text):
+    hex_color_pattern = r'\[#\b[0-9a-fA-F]{6}\b'
+    return re.sub(hex_color_pattern, '', text)
 
 
 def disable_ssl_warnings():

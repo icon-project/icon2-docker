@@ -1,26 +1,25 @@
 REPO_HUB = iconloop
 NAME = icon2-node
-VERSION = v1.3.9
+VERSION = v1.4.1
 NTP_VERSION = ntp-4.2.8p15
 IS_LOCAL = true
 BASE_IMAGE = goloop-icon
 IS_NTP_BUILD = false
 GOLOOP_PATH = goloop
 DEBUG = false
+GOLOOP_BUILD_CMD = "goloop-icon-image"
 
-ifeq ($(DEBUG), true)
-	VERBOSE_OPTION = -v
-else
-	VERBOSE_OPTION =
+ifneq ("$(wildcard .env)","")
+include .env
+export $(shell sed 's/=.*//' .env | grep -v ^\#)
 endif
 
-ifeq ($(debug), true)
+ifeq ($(DEBUG)$(debug), true)
 	VERBOSE_OPTION = -v
 	DEBUG = true
 else
 	VERBOSE_OPTION =
 endif
-GOLOOP_BUILD_CMD = "goloop-icon-image"
 
 ifdef version
 VERSION = $(version)
@@ -30,17 +29,34 @@ ifdef service
 SERVICE = $(service)
 endif
 
+ifdef branch
+BRANCH := $(branch)
+endif
+
 ifdef VERSION_ARG
 VERSION = $(VERSION_ARG)
 endif
+
 ifdef REPO_HUB_ARG
 REPO_HUB = $(REPO_HUB_ARG)
 endif
 
 TAGNAME = $(VERSION)
-VCS_REF = $(strip $(shell git rev-parse --short HEAD))
+VCS_REF = $(strip $(shell git rev-parse --short HEAD 2>/dev/null))
 BUILD_DATE = $(strip $(shell date -u +"%Y-%m-%dT%H:%M:%S%Z"))
 GIT_DIRTY  = $(shell cd ${GOLOOP_PATH}; git diff --shortstat 2> /dev/null | tail -n1 )
+GIT_BRANCH = $(strip $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
+GIT_BRANCH := $(subst /,-,$(GIT_BRANCH))
+
+ifeq ($(GIT_BRANCH),)
+TAGNAME := $(VERSION)
+else ifeq ($(GIT_BRANCH),devel)
+TAGNAME := $(VERSION)-dev
+else ifneq ($(GIT_BRANCH),master)
+ifneq ($(GIT_BRANCH),main)
+TAGNAME := $(VERSION)-$(GIT_BRANCH)
+endif
+endif
 
 ifeq ($(IS_LOCAL), true)
 DOCKER_BUILD_OPTION = --progress=plain --no-cache --rm=true
@@ -49,25 +65,34 @@ DOCKER_BUILD_OPTION = --no-cache --rm=true
 endif
 
 ifeq ($(MAKECMDGOALS) , bash)
-	DOWNLOAD_URL:="https://networkinfo.solidwallet.io/info"
-	DOWNLOAD_URL_TYPE:="indexing"
+	DOWNLOAD_URL ?="https://networkinfo.solidwallet.io/info"
+	DOWNLOAD_URL_TYPE ?="indexing"
 #	SEEDS:="20.20.6.86:7100"
 #	AUTO_SEEDS:=True
-	SERVICE:=MainNet
+#	SERVICE:=MainNet
+	SERVICE ?=BerlinNet
 #	CC_DEBUG:="true"
-	IS_AUTOGEN_CERT:=true
-    PRIVATE_KEY_FILENAME:="YOUR_KEYSTORE_FILENAME.der"
-    NGINX_THROTTLE_BY_IP_VAR:="\$$binary_remote_addr"
-	LOCAL_TEST:="true"
+	IS_AUTOGEN_CERT ?=true
+    PRIVATE_KEY_FILENAME ?="YOUR_KEYSTORE_FILENAME.der"
+    NGINX_THROTTLE_BY_IP_VAR ?="\$$binary_remote_addr"
+	LOCAL_TEST ?="false"
 #	FASTEST_START:="true"
-	NTP_REFRESH_TIME:="30"
-	MAIN_TIME_OUT:="30"
-	ROLE:=0
-	GOLOOP_CONSOLE_LEVEL:="trace"
-	GOLOOP_LOG_LEVEL:="trace"
-	LOG_OUTPUT_TYPE:="console"
-#	GOLOOP_NODE_SOCK:="/goloop/cli.sock"
-#	GOLOOP_EE_SOCKET:="/goloop/ee.sock"
+	NTP_REFRESH_TIME ?="30"
+	MAIN_TIME_OUT ?="30"
+	ROLE ?=3
+# 	GOLOOP_CONSOLE_LEVEL:="warn"
+	GOLOOP_LOG_LEVEL ?="debug"
+	LOG_OUTPUT_TYPE ?="split"
+	KEY_PASSWORD ?="testtest"
+	USE_HEALTH_CHECK ?="false"
+	CTX_LEVEL ?= "debug"
+	DOWNLOAD_OPTION ?="-V -j10 -x16 --http-accept-gzip --disk-cache=64M -c "
+#     GOLOOP_LOG_WRITER_FILENAME:="/goloop/logs/goloop.log"
+#     GOLOOP_LOG_WRITER_COMPRESS:="true"
+#     GOLOOP_LOG_WRITER_LOCALTIME:="true"
+#     GOLOOP_LOG_WRITER_MAXAGE:="0"
+#     GOLOOP_LOG_WRITER_MAXSIZE:="1024"
+#     GOLOOP_LOG_WRITER_MAXBACKUPS:="7"
 
 endif
 
@@ -101,18 +126,26 @@ endif
 
 TEST_FILES := $(shell find tests -name '*.yml')
 
-.PHONY: all build push test tag_latest release ssh bash
+.PHONY: all build push test tag_latest release ssh bash check-branch
 
-all: build_goloop_base build
+all: build_goloop_base build remove_goloop_base_image
+build_push: build_goloop_base build remove_goloop_base_image push
 hub: push_hub tag_latest
 version:
-	@echo $(VERSION)
+	@echo $(ECHO_OPTION) $(VERSION)
 
-print_version:
+print_version: check_duplicate_vars
 	@echo $(ECHO_OPTION) "$(OK_COLOR) VERSION-> $(VERSION)  REPO-> $(REPO_HUB)/$(NAME):$(TAGNAME) $(NO_COLOR) IS_LOCAL: $(IS_LOCAL)"
-#	@$(shell echo $(ECHO_OPTION) "$(OK_COLOR) ----- Build Environment ----- \n $(NO_COLOR)")
 
-make_debug_mode:
+check_duplicate_vars:
+	@echo "Checking for duplicate environment variable definitions..."
+	@$(foreach var,$(sort $(shell sed 's/=.*//' .env)), \
+		$(if $(findstring $(var),$(.VARIABLES)), \
+			echo $(ECHO_OPTION) "$(WARN_COLOR) ** WARNING: Variable $(var) is defined in Makefile with value: '$(shell grep ^$(var)= .env | cut -d'=' -f2)'$(NO_COLOR)"; \
+		) \
+	)
+
+make_debug_mode: check_duplicate_vars
 	@$(shell echo $(ECHO_OPTION) "$(OK_COLOR) ----- DEBUG Environment ----- $(MAKECMDGOALS)  \n $(NO_COLOR)" >&2)\
 		$(shell echo "" > DEBUG_ARGS) \
 			$(foreach V, \
@@ -127,7 +160,7 @@ make_debug_mode:
 				)\
 			)
 
-make_build_args:
+make_build_args: check_duplicate_vars
 	@$(shell echo $(ECHO_OPTION) "$(OK_COLOR) ----- Build Environment ----- \n $(NO_COLOR)" >&2)\
 	   $(shell echo "" > BUILD_ARGS) \
 		$(foreach V, \
@@ -147,16 +180,26 @@ test:   make_build_args print_version
 
 changeconfig: make_build_args
 		@CONTAINER_ID=$(shell docker run -d $(REPO_HUB)/$(NAME):$(TAGNAME)) ;\
-		 echo "COPY TO [$$CONTAINER_ID]" ;\
+		 echo $(ECHO_OPTION) "COPY TO [$$CONTAINER_ID]" ;\
 		 docker cp "src/." "$$CONTAINER_ID":/src/ ;\
 		 docker exec -it "$$CONTAINER_ID" sh -c "echo `date +%Y-%m-%d:%H:%M:%S` > /.made_day" ;\
-		 echo "COMMIT [$$CONTAINER_ID]" ;\
+		 echo $(ECHO_OPTION) "COMMIT [$$CONTAINER_ID]" ;\
 		 docker commit -m "Change the configure files `date`" "$$CONTAINER_ID" $(REPO_HUB)/$(NAME):$(TAGNAME) ;\
-		 echo "STOP [$$CONTAINER_ID]" ;\
+		 echo $(ECHO_OPTION) "STOP [$$CONTAINER_ID]" ;\
 		 docker stop "$$CONTAINER_ID" ;\
-		 echo "CLEAN UP [$$CONTAINER_ID]" ;\
+		 echo $(ECHO_OPTION)  "CLEAN UP [$$CONTAINER_ID]" ;\
 		 docker rm "$$CONTAINER_ID"
 
+check-branch:
+ifndef BRANCH
+	$(error BRANCH is undefined)
+endif
+		@if git show-ref --verify --quiet refs/remotes/origin/$(BRANCH); then \
+				echo "Branch '$(BRANCH)' found on remote. Checking out..."; \
+				git checkout $(BRANCH) || git checkout -b $(BRANCH) origin/$(BRANCH); \
+		else \
+				echo "Branch '$(BRANCH)' not found on remote."; \
+		fi
 
 change_version:
 		$(call colorecho, "-- Change Goloop Version ${VERSION} --")
@@ -173,8 +216,6 @@ change_version:
 				git pull ;\
 		fi
 
-
-
 check-and-reinit-submodules:
 		@if git submodule status | egrep -q '^[-]|^[+]' ; then \
 				echo "INFO: Need to reinitialize git submodules"; \
@@ -186,19 +227,44 @@ build_goloop_base: make_build_args change_version
 		$(call colorecho, "-- Build goloop base image --")
 		cd $(GOLOOP_PATH) && $(MAKE) $(GOLOOP_BUILD_CMD)
 
+remove_goloop_base_image:
+		$(call colorecho, "-- Remove goloop base image --")
+		docker rmi -f goloop-icon
 
 build: make_build_args
 		docker build $(DOCKER_BUILD_OPTION) -f Dockerfile \
 			$(shell cat BUILD_ARGS) \
 			-t $(REPO_HUB)/$(NAME):$(TAGNAME) .
-		docker rmi -f goloop-icon
 		$(call colorecho, "\n\nSuccessfully build '$(REPO_HUB)/$(NAME):$(TAGNAME)'")
 		@echo "==========================================================================="
 		@docker images | grep  $(REPO_HUB)/$(NAME) | grep $(TAGNAME)
 
+hotfix_prepare:
+ifeq ($(BASE_IMAGE),goloop-icon)
+HOTFIX_BASE_IMAGE=${REPO_HUB}/${NAME}:${TAGNAME}
+else
+HOTFIX_BASE_IMAGE=${BASE_IMAGE}
+endif
+
+hotfix: make_build_args hotfix_prepare
+		$(call colorecho, "It will be create a hotfix docker image.")
+		$(call colorecho, "'${HOTFIX_BASE_IMAGE}-hotfix' using base image '${HOTFIX_BASE_IMAGE}'")
+		docker build --build-arg HOTFIX_BASE_IMAGE=$(HOTFIX_BASE_IMAGE) -f Dockerfile.hotfix -t $(HOTFIX_BASE_IMAGE)-hotfix .
+		@echo " "
+		@echo "==========================================================================="
+		@docker images | grep -E '$(subst :,\s+,$(HOTFIX_BASE_IMAGE)-hotfix)'
+		$(call colorecho, "Successfully build '$(HOTFIX_BASE_IMAGE)-hotfix'")
+		@echo " "
+		$(call colorecho, "Check the image '$(HOTFIX_BASE_IMAGE)-hotfix'")
+		docker run --rm -it --entrypoint bash  $(HOTFIX_BASE_IMAGE)-hotfix -c "/goloop/bin/goloop version"
+
+
+squash:
+		docker-squash -f 70 -t $(REPO_HUB)/$(NAME):$(TAGNAME)-squash $(REPO_HUB)/$(NAME):$(TAGNAME)  -vvv
 
 show_labels: make_build_args
-		docker $(REPO_HUB)/$(NAME):$(TAGNAME) | jq .[].Config.Labels
+		docker inspect $(REPO_HUB)/$(NAME):$(TAGNAME) | jq .[].Config.Labels
+
 
 build_ci: make_build_args change_version
 		cd $(GOLOOP_PATH) && $(MAKE) goloop-icon-image
@@ -230,20 +296,20 @@ tag_latest: print_version
 		docker push $(REPO_HUB)/$(NAME):latest
 
 
-bash: make_debug_mode print_version
+bash: make_debug_mode  print_version
 	docker run  $(shell cat DEBUG_ARGS) -p 9000:9000 -p 7100:7100 -it -v $(PWD)/config:/goloop/config -v ${PWD}/s6:/s6-int \
 		-v $(PWD)/logs:/goloop/logs -v $(PWD)/ctx:/ctx -v $(PWD)/data:/goloop/data -e VERSION=$(TAGNAME) -v $(PWD)/src:/src --entrypoint /bin/bash \
-		--name $(NAME) --cap-add SYS_TIME --rm $(REPO_HUB)/$(NAME):$(TAGNAME)
+		--name $(NAME)-makefile --cap-add SYS_TIME --rm $(REPO_HUB)/$(NAME):$(TAGNAME)
 
 
-f_bash: make_debug_mode print_version
+f_bash: make_debug_mode check_duplicate_vars print_version
 		docker run  $(shell cat DEBUG_ARGS) -p 9000:9000 -p 7100:7100 -it -v $(PWD)/config:/goloop/config \
 		-v $(PWD)/logs:/goloop/logs -v $(PWD)/ctx:/ctx -v $(PWD)/data:/goloop/data -e VERSION=$(TAGNAME) -v $(PWD)/src:/src --entrypoint /bin/bash \
 		--name $(NAME) --network host --restart on-failure $(REPO_HUB)/$(NAME):$(TAGNAME)
 
 
 list:
-		@echo "$(OK_COLOR) Tag List - $(REPO_HUB)/$(NAME) $(NO_COLOR)"
+		@echo  $(ECHO_OPTION) "$(OK_COLOR) Tag List - $(REPO_HUB)/$(NAME) $(NO_COLOR)"
 		@curl -s  https://registry.hub.docker.com/v2/repositories/$(REPO_HUB)/$(NAME)/tags | jq --arg REPO "$(REPO_HUB)/$(NAME):" -r '.=("\($$REPO)"+.results[].name)'
 		$(call colorecho, "-- END --")
 

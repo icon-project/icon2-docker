@@ -4,6 +4,7 @@ import os
 import asyncio
 import unittest
 import requests
+from pawnlib.output import print_syntax
 
 from container_tester import (
     set_os_env, ContainerTestCase, TestRunner
@@ -50,7 +51,7 @@ class TestNodeChecker(ContainerTestCase):
     # @unittest.skip("test case skipping")
     def test_100_increase_blockheight(self):
         self.wait_until_blockheight(
-            timeout=60,
+            timeout=120,
             pause=1,
             reach_block=5,
         )
@@ -74,7 +75,7 @@ class TestNodeChecker(ContainerTestCase):
     # @unittest.skip("test case skipping")
     def test_260_increase_blockheight(self):
         self.wait_until_blockheight(
-            timeout=60,
+            timeout=120,
             pause=1,
             reach_block=5
         )

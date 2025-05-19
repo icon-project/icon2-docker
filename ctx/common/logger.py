@@ -3,13 +3,15 @@ import os
 import logging
 from logging import handlers
 import datetime
+from rich.console import Console
+from rich.logging import RichHandler
+import functools
+
 
 class CustomLog:
     def __init__(self, name):
         self.log = logging.getLogger(name)
         self.log.propagate = True
-        # self.formatter = logging.Formatter("%(levelname).1s|%(asctime)s.%(msecs)06d|-|%(name)s|%(message)s", "%Y%m%d-%H:%M:%S")
-        # self.formatter = logging.Formatter(f"%(levelname).1s|%(asctime)s.%(msecs)06d|-|%(name)s|%(filename)s:%(lineno)d %(funcName)-15s| %(message)s", "%Y%m%d-%H:%M:%S")
         self.formatter = logging.Formatter(
             f"%(levelname).1s|%(asctime)s.%(msecs)06d|-|%(name)s|%(filename)s:%(lineno)d| %(message)s",
             "%Y%m%d-%H:%M:%S"
@@ -21,7 +23,6 @@ class CustomLog:
             "ERROR": logging.ERROR,
             "CRITICAL": logging.CRITICAL}
 
-
     def set_level(self, level):
         self.log.setLevel(self.levels[level])
 
@@ -31,6 +32,17 @@ class CustomLog:
         """
         log_str = f"{msg}"
         return log_str
+
+    def add_rich_handler(self, level):
+        console = Console()
+        logging_handler = RichHandler(console=console)
+        logging_handler.setLevel(self.levels[level])
+        logging_handler.setFormatter(self.formatter)
+        logging_handler._log_render.show_time = False
+        logging_handler._log_render.show_level = False
+        logging_handler._log_render.show_path = False
+        self.log.addHandler(logging_handler)
+        return self.log
 
     def stream_handler(self, level):
         """
@@ -42,10 +54,10 @@ class CustomLog:
         > "CRITICAL" : logging.CRITICAL ,
         :return:
         """
-        streamHandler = logging.StreamHandler()
-        streamHandler.setLevel(self.levels[level])
-        streamHandler.setFormatter(self.formatter)
-        self.log.addHandler(streamHandler)
+        _stream_handler = logging.StreamHandler()
+        _stream_handler.setLevel(self.levels[level])
+        _stream_handler.setFormatter(self.formatter)
+        self.log.addHandler(_stream_handler)
         return self.log
 
     def file_handler(self, file_name, mode):
@@ -59,10 +71,10 @@ class CustomLog:
         > "CRITICAL" : logging.CRITICAL ,
         :return:
         """
-        fileHandler = logging.FileHandler(file_name, mode=mode)
-        fileHandler.setLevel(logging.DEBUG)
-        fileHandler.setFormatter(self.formatter)
-        self.log.addHandler(fileHandler)
+        _file_handler = logging.FileHandler(file_name, mode=mode)
+        _file_handler.setLevel(logging.DEBUG)
+        _file_handler.setFormatter(self.formatter)
+        self.log.addHandler(_file_handler)
         return self.log
 
     def file_rotating_handler(self, file_name, mode, level, backup_count, log_max_size):
@@ -80,23 +92,23 @@ class CustomLog:
         :return:
         """
 
-        fileHandler = logging.handlers.RotatingFileHandler(
+        _file_handler = logging.handlers.RotatingFileHandler(
             filename=file_name,
             maxBytes=log_max_size,
             backupCount=backup_count,
             mode=mode)
-        fileHandler.setLevel(self.levels[level])
-        fileHandler.setFormatter(self.formatter)
-        self.log.addHandler(fileHandler)
+        _file_handler.setLevel(self.levels[level])
+        _file_handler.setFormatter(self.formatter)
+        self.log.addHandler(_file_handler)
         return self.log
 
     def time_rotate_handler(self,
-                           filename='./log.txt',
-                           when="M",
-                           level="DEBUG",
-                           backup_count=4,
-                           atTime=datetime.time(0, 0, 0),
-                           interval=1):
+                            filename='./log.txt',
+                            when="M",
+                            level="DEBUG",
+                            backup_count=4,
+                            atTime=datetime.time(0, 0, 0),
+                            interval=1):
         """
         :param filename:
         :param when: 저장 주기
@@ -105,16 +117,43 @@ class CustomLog:
         :param atTime: datetime.time(0, 0, 0)
         :return:
         """
-        fileHandler = logging.handlers.TimedRotatingFileHandler(
+        _file_handler = logging.handlers.TimedRotatingFileHandler(
             filename=filename,
             when=when,  # W0
             backupCount=backup_count,
             interval=interval,
             atTime=atTime)
-        fileHandler.setLevel(self.levels[level])
-        fileHandler.setFormatter(self.formatter)
-        self.log.addHandler(fileHandler)
+        _file_handler.setLevel(self.levels[level])
+        _file_handler.setFormatter(self.formatter)
+        self.log.addHandler(_file_handler)
         return self.log
+
+    def error_file_handler(self, file_name):
+        """
+        오직 ERROR 레벨 로그를 위한 파일 핸들러 설정
+        :param file_name: 로그 파일명 (예: 'error.log')
+        :return: 로거 객체
+        """
+        _file_handler = logging.FileHandler(file_name, mode='a')
+        _file_handler.setLevel(logging.ERROR)  # ERROR 레벨 설정
+        _file_handler.setFormatter(self.formatter)
+        self.log.addHandler(_file_handler)
+        return self.log
+
+
+def log_method_call(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+
+        func_code = func.__code__
+        func_file = func_code.co_filename
+        func_line_no = func_code.co_firstlineno
+        func_name = func.__name__
+
+        self.cfg.logger.info(f"Start {func_name}() at {func_file}:{func_line_no}")
+        result = func(self, *args, **kwargs)
+        return result
+    return wrapper
 
 
 if __name__ == '__main__':
@@ -124,12 +163,11 @@ if __name__ == '__main__':
     logger.set_level('DEBUG')
     logger.stream_handler("INFO")
     logger.time_rotate_handler(filename=file_name,
-                                 when="M",
-                                 interval=2,
-                                 backup_count=3,
-                                 level="INFO"
-                                 )
-    ## run
+                               when="M",
+                               interval=2,
+                               backup_count=3,
+                               level="INFO"
+                               )
     idx = 0
     while True:
         logger.log.debug(logger.log_formatter(f'debug {idx}'))

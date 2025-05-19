@@ -6,9 +6,28 @@ import requests
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.configure import Configure as CFG
+from common.exception import SeedConnectionError, ConfigException
 from common.icon2 import WalletLoader
-from common.output import is_file,  write_file, write_json, write_yaml, dump
+from common.output import is_file, write_file, write_json, write_yaml, dump
 from manager.restore_v3 import Restore
+from pawnlib.resource import net
+import functools
+from common.logger import log_method_call
+
+
+# def log_method_call(func):
+#     @functools.wraps(func)
+#     def wrapper(self, *args, **kwargs):
+#
+#         func_code = func.__code__
+#         func_file = func_code.co_filename
+#         func_line_no = func_code.co_firstlineno
+#         func_name = func.__name__
+#
+#         self.cfg.logger.info(f"Start {func_name}() at {func_file}:{func_line_no}")
+#         result = func(self, *args, **kwargs)
+#         return result
+#     return wrapper
 
 
 class ConfigureSetter:
@@ -18,14 +37,21 @@ class ConfigureSetter:
         self.base_dir = self.config.get('BASE_DIR')
         self.config_dir = f"{self.base_dir}/config"
 
-    def make_base_dir(self, ):
-        for node_dir in [self.base_dir,
-                         f"{self.base_dir}/config",
-                         f"{self.config['GOLOOP_NODE_DIR']}",
-                         f"{self.base_dir}/logs"
-                         ]:
-            if not os.path.exists(node_dir):
-                os.mkdir(node_dir)
+    @staticmethod
+    def ensure_directory(dir_path):
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+    @log_method_call
+    def create_directory_structure(self, ):
+        directories = [
+            self.base_dir,
+            self.config_dir,
+            self.config.get('GOLOOP_NODE_DIR', os.path.join(self.base_dir, "data")),
+            os.path.join(self.base_dir, "logs"),
+        ]
+        for dir_path in directories:
+            self.ensure_directory(dir_path)
 
     def delete_sock(self, ):
         sock_dir = f"{self.base_dir}/data"
@@ -36,10 +62,8 @@ class ConfigureSetter:
         if is_file(_ee_sock):
             os.remove(_ee_sock)
 
+    @log_method_call
     def create_key(self, ):
-        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
-        if not os.path.exists(self.base_dir):
-            self.make_base_dir()
         keysecret_passwd = self.config.get('KEY_PASSWORD')
         keysecret_filename = self.config.get('GOLOOP_KEY_SECRET', '/goloop/config/keysecret')
         keystore_filename = self.config.get('KEY_STORE_FILENAME', None)
@@ -58,19 +82,18 @@ class ConfigureSetter:
             self.cfg.logger.info(write_file(f'{keysecret_filename}', keysecret_passwd))
             wallet = WalletLoader(f"{self.config_dir}/{keystore_filename}", keysecret_passwd, keysecret_filename)
             wallet.get_wallet()
-
             self.cfg.logger.info(f"Already keystore file - {keystore_filename}")
 
+    @log_method_call
     def create_genesis_json(self, ):
-        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         rs = write_json(
             f"{self.config.get('GENESIS_JSON', '/goloop/config/genesis.json')}",
             self.config.get('GENESIS')
         )
         self.cfg.logger.info(f"{rs}")
 
+    @log_method_call
     def create_gs_zip(self, ):
-        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         genesis_file = f'{self.config.get("CONFIG_URL")}/{self.config.get("SERVICE")}/icon_genesis.zip'
         res = requests.get(genesis_file)
         if res.status_code == 200:
@@ -81,10 +104,10 @@ class ConfigureSetter:
             )
             self.cfg.logger.info(f"{rs}")
         else:
-            self.cfg.logger.error(f"API status code is {res.status_code}. ({genesis_file})")
+            self.cfg.logger.error(f"[ERROR] Cant download the genesis_file ({genesis_file}). status_code={res.status_code}")
 
+    @log_method_call
     def create_icon_config(self, ):
-        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         if self.config.get('IISS'):
             rs = write_json(
                 f"{self.config.get('IISS_JSON', f'/goloop/icon_config.json')}",
@@ -92,8 +115,8 @@ class ConfigureSetter:
             )
             self.cfg.logger.info(f"{rs}")
 
+    @log_method_call
     def create_yaml_file(self, file_name=None):
-        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
         if file_name is None:
             file_name = f"{os.path.join(self.base_dir, self.config.get('CONFIG_LOCAL_FILE', 'configure.yml'))}"
         rs = write_yaml(
@@ -102,35 +125,39 @@ class ConfigureSetter:
         )
         self.cfg.logger.info(f"{rs}")
 
-    def create_env_file(self, file_name: str='.env'):
-        file_name = f"{os.path.join(self.base_dir, file_name)}"
-        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
-        with open(file_name, 'w') as env:
-            for key, val in self.config.items():
-                if key in ["KEY_PASSWORD", "KEY_SECRET"]:
-                    continue
-                if isinstance(val, dict) or isinstance(val, list):
-                    continue
-                if val is not None:
-                    env.write(f"{key}={val}\n")
+    @log_method_call
+    def create_env_file(self, file_name: str = '.env'):
+        file_path = os.path.join(self.base_dir, file_name)
+        try:
+            with open(file_path, 'w') as env_file:
+                for key, value in self.config.items():
+                    if key in ["KEY_PASSWORD", "KEY_SECRET"] or isinstance(value, (dict, list)):
+                        continue
+                    value_str = "" if value is None else str(value)
+                    if " " in value_str:
+                        value_str = f'"{value_str}"'
+                    env_file.write(f"{key}={value_str}\n")
+        except Exception as e:
+            self.cfg.logger.error(f"Error occurred while creating .env file: {e}")
+            raise
+        self.cfg.logger.info(f"Successfully created .env file at {file_path}")
 
-    def create_db(self, ):
-        self.cfg.logger.info(f"Start {sys._getframe().f_code.co_name}")
-        self.cfg.logger.info(f"[RESTORE] "
-                             f"FASTEST_START = {self.config.get('FASTEST_START')}"
-                             )
-        if self.config.get('FASTEST_START') is True:
-            self.cfg.logger.info(f"[RESTORE] DOWNLOAD from ICON2 DB")
+    @log_method_call
+    def initialize_database(self, ):
+        is_fast_start_enabled = self.config.get('FASTEST_START', False)
+        self.cfg.logger.info(f"[DATABASE INITIALIZATION] FASTEST_START: {is_fast_start_enabled}")
+        if is_fast_start_enabled:
+            self.cfg.logger.info("[DATABASE INITIALIZATION] Downloading database snapshot from ICON DB")
             self.downloader()
-
         else:
-            self.cfg.logger.info(f"[PASS] Ignore DB download")
+            self.cfg.logger.info("[DATABASE INITIALIZATION] Skipping database download as per configuration")
 
+    @log_method_call
     def downloader(self, ):
         base_dir = self.config.get('BASE_DIR')
 
         # Goloop DB PATH
-        if self.config.get('GOLOOP_NODE_DIR') :
+        if self.config.get('GOLOOP_NODE_DIR'):
             db_path = self.config['GOLOOP_NODE_DIR']
         else:
             default_db_path = 'data'
@@ -143,6 +170,7 @@ class ConfigureSetter:
 
         download_url = self.config['DOWNLOAD_URL']
         download_url_type = self.config['DOWNLOAD_URL_TYPE']
+        download_option = self.config.get('DOWNLOAD_OPTION', None)
 
         Restore(
             db_path=db_path,
@@ -152,7 +180,48 @@ class ConfigureSetter:
             download_url=download_url,
             download_tool=download_tool,
             download_url_type=download_url_type,
-        )
+            download_option=download_option,
+        ).run()
+
+    def check_seed_servers(self):
+        seeds = self.config.get('SEEDS').split(',')
+        exception_messages = []
+        alive_seed = False
+
+        for seed in seeds:
+            if not net.check_port(seed):
+                exception_messages.append(seed)
+            else:
+                alive_seed = True
+
+        if alive_seed and exception_messages:
+            self.cfg.logger.error(f"Some seed servers could not be reached: {exception_messages}")
+
+        elif not alive_seed:
+            self.cfg.handle_value_error(f"Cannot connect to any Seed Servers 👉 {exception_messages}", SeedConnectionError)
+
+    def check_role(self):
+        allows_roles = [0, 1, 3]
+        if self.config.get('ROLE') not in allows_roles:
+            self.cfg.handle_value_error(f"Invalid ROLE, role={self.config.get('ROLE')}, allows={allows_roles}", ConfigException)
+
+    def validate_environment(self):
+        mandatory_env_keys = ["KEY_PASSWORD"]
+        for env_key in mandatory_env_keys:
+            env_value = os.getenv(env_key)
+            self.cfg.logger.debug(f"Validate environment {env_key}={env_value}")
+            if not os.getenv(env_key):
+                # self.logger.error(f"There is no password. Requires '{key}' environment.")
+                self.cfg.handle_value_error(f"There is no '{env_key}'. Requires '{env_key}' environment. {env_key}='{env_value}'", ConfigException)
+
+    @log_method_call
+    def check_server_environment_prepare(self):
+        self.check_seed_servers()
+        self.check_role()
+        self.validate_environment()
+        # TODO
+        # check keystore file
+        # sys.exit(-127)
 
     def run(self, ):
         dump(self.config)
@@ -165,7 +234,7 @@ class ConfigureSetter:
         self.config['IISS_JSON'] = f'icon_config.json'
         self.create_yaml_file()
         self.create_env_file('.env')
-        self.make_base_dir()
+        self.create_directory_structure()
         self.create_key()
         self.create_genesis_json()
         self.create_gs_zip()

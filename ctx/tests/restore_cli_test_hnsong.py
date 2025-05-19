@@ -63,7 +63,7 @@ Restore(
     download_url=download_url,
     download_tool=download_tool,
     download_url_type=download_url_type
-)
+).run()
 
 exit()
 
@@ -127,7 +127,7 @@ def main():
         region=region
         # db_path="/Users/jinwoo/work/ICON2_TEST",
         # profile="upload_test"
-    )
+    ).run()
 
 if __name__ == "__main__":
     main()

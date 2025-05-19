@@ -78,6 +78,27 @@ def get_file_path(filename):
     }
 
 
+def is_directory(path):
+    """
+    Check if the given path is a directory.
+
+    :param path: The path to check.
+    :return: True if the path is a directory, False otherwise.
+
+    Example:
+
+        .. code-block:: python
+
+            check.is_directory("/home/user")
+            # >> True
+
+            check.is_directory("/home/user/myfile.txt")
+            # >> False
+
+    """
+    return os.path.isdir(path)
+
+
 def is_file(filename):
     if "*" in filename:
         if len(glob(filename)) > 0:
