@@ -6,6 +6,7 @@ import json
 import yaml
 import requests
 import socket
+import time
 
 from common.logger import CustomLog as CL
 from common import converter
@@ -104,45 +105,73 @@ class Configure:
             self.config_from_file()
         else:
             self.logger.info(f"Download new configuration")
-            res = requests.get(f'{service_url}/{self.base_env["CONFIG_URL_FILE"]}')
-            if res.status_code == 200:
-                self.config = yaml.safe_load(res.text)
-                if self.config.get('settings') and self.config['settings'].get('env'):
-                    for compose_env in self.config['reference'].get('env').keys():
-                        if os.getenv(compose_env):
-                            self.config['settings']['env'][compose_env] = self.get_os_env(compose_env)
+            max_retries = 3
+            retry_count = 0
+            base_delay = 5  # 기본 대기 시간 (초)
+
+            while retry_count < max_retries:
+                try:
+                    res = requests.get(f'{service_url}/{self.base_env["CONFIG_URL_FILE"]}')
+                    if res.status_code == 200:
+                        self.config = yaml.safe_load(res.text)
+                        if self.config.get('settings') and self.config['settings'].get('env'):
+                            for compose_env in self.config['reference'].get('env').keys():
+                                if os.getenv(compose_env):
+                                    self.config['settings']['env'][compose_env] = self.get_os_env(compose_env)
+                                else:
+                                    pass
+                            self.config['settings']['env'].update(self.base_env)
+                            # [icon2]
+                            icon2_envs = [env for env in self.config['reference'].get('env').keys() if env.startswith("GOLOOP")]
+                            for icon2_env in icon2_envs:
+                                self.config['settings']['env'][icon2_env] = self.get_os_env(icon2_env)
+                            self.config['settings']['env']['GOLOOP_NODE_DIR'] = os.path.join(self.base_env['BASE_DIR'], 'data')
+                            self.set_second_env(self.config['settings']['env']['GOLOOP_NODE_DIR'])
+                            # [keystore]
+                            key_store_filename = self.config['settings']['env'].get("KEY_STORE_FILENAME", None)
+                            if key_store_filename:
+                                self.config['settings']['env']['GOLOOP_KEY_STORE'] = f"{self.config['settings']['env']['BASE_DIR']}/config/{key_store_filename}"
+                            else:
+                                self.config['settings']['env']['GOLOOP_KEY_STORE'] = os.getenv('GOLOOP_KEY_STORE')
+                            # [network]
+                            if self.base_env['LOCAL_TEST'] is True:
+                                private_ip = get_local_ip()
+                                port = self.config['settings']['env'].get('GOLOOP_P2P_LISTEN', ':8080').split(':')[-1]
+                                self.config['settings']['env']['GOLOOP_P2P'] = f"{private_ip}:{port}"
+                            else:
+                                if os.getenv('GOLOOP_P2P') and os.getenv('GOLOOP_P2P') != '127.0.0.1:8080':
+                                    self.config['settings']['env']['GOLOOP_P2P'] = os.getenv('GOLOOP_P2P')
+                                else:
+                                    public_ip = requests.get('http://checkip.amazonaws.com').text.strip()
+                                    port = self.config['settings']['env'].get('GOLOOP_P2P_LISTEN', ':8080').split(':')[-1]
+                                    self.config['settings']['env']['GOLOOP_P2P'] = f"{public_ip}:{port}"
+                            self.base_env.pop('LOCAL_TEST')
+                            break  # 설정 파일 다운로드 및 처리 성공 시 루프 종료
                         else:
-                            pass
-                    self.config['settings']['env'].update(self.base_env)
-                    # [icon2]
-                    icon2_envs = [env for env in self.config['reference'].get('env').keys() if env.startswith("GOLOOP")]
-                    for icon2_env in icon2_envs:
-                        self.config['settings']['env'][icon2_env] = self.get_os_env(icon2_env)
-                    self.config['settings']['env']['GOLOOP_NODE_DIR'] = os.path.join(self.base_env['BASE_DIR'], 'data')
-                    self.set_second_env(self.config['settings']['env']['GOLOOP_NODE_DIR'])
-                    # [keystore]
-                    key_store_filename = self.config['settings']['env'].get("KEY_STORE_FILENAME", None)
-                    if key_store_filename:
-                        self.config['settings']['env']['GOLOOP_KEY_STORE'] = f"{self.config['settings']['env']['BASE_DIR']}/config/{key_store_filename}"
+                            retry_count += 1
+                            if retry_count < max_retries:
+                                delay = base_delay * (2 ** (retry_count - 1))  # 지수 백오프 계산
+                                self.logger.warning(f"No env found. Waiting {delay} seconds before retry ({retry_count}/{max_retries})...")
+                                time.sleep(delay)
+                                continue
+                            self.logger.error('No env.')
                     else:
-                        self.config['settings']['env']['GOLOOP_KEY_STORE'] = os.getenv('GOLOOP_KEY_STORE')
-                    # [network]
-                    if self.base_env['LOCAL_TEST'] is True:
-                        private_ip = get_local_ip()
-                        port = self.config['settings']['env'].get('GOLOOP_P2P_LISTEN', ':8080').split(':')[-1]
-                        self.config['settings']['env']['GOLOOP_P2P'] = f"{private_ip}:{port}"
-                    else:
-                        if os.getenv('GOLOOP_P2P') and os.getenv('GOLOOP_P2P') != '127.0.0.1:8080':
-                            self.config['settings']['env']['GOLOOP_P2P'] = os.getenv('GOLOOP_P2P')
-                        else:
-                            public_ip = requests.get('http://checkip.amazonaws.com').text.strip()
-                            port = self.config['settings']['env'].get('GOLOOP_P2P_LISTEN', ':8080').split(':')[-1]
-                            self.config['settings']['env']['GOLOOP_P2P'] = f"{public_ip}:{port}"
-                    self.base_env.pop('LOCAL_TEST')
-                else:
-                    self.logger.error('No env.')
-            else:
-                self.logger.error(f'API status code is {res.status_code}. ({service_url}/{self.base_env["CONFIG_URL_FILE"]})')
+                        retry_count += 1
+                        if retry_count < max_retries:
+                            delay = base_delay * (2 ** (retry_count - 1))  # 지수 백오프 계산
+                            self.logger.warning(f"API status code is {res.status_code}. Waiting {delay} seconds before retry ({retry_count}/{max_retries})... ({service_url}/{self.base_env['CONFIG_URL_FILE']})")
+                            time.sleep(delay)
+                            continue
+                        self.logger.error(f'API status code is {res.status_code}. ({service_url}/{self.base_env["CONFIG_URL_FILE"]})')
+                except Exception as e:
+                    retry_count += 1
+                    if retry_count < max_retries:
+                        delay = base_delay * (2 ** (retry_count - 1))  # 지수 백오프 계산
+                        self.logger.warning(f"Download failed: {e}. Waiting {delay} seconds before retry ({retry_count}/{max_retries})...")
+                        time.sleep(delay)
+                        continue
+                    self.logger.error(f"Download failed after {max_retries} attempts: {e}")
+
             self.config = converter.UpdateType(self.config, self.logger).check()
 
     def set_second_env(self, dir_name):
