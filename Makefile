@@ -1,6 +1,6 @@
 REPO_HUB = iconloop
 NAME = icon2-node
-VERSION = v1.4.1
+VERSION = v1.4.4
 NTP_VERSION = ntp-4.2.8p15
 IS_LOCAL = true
 BASE_IMAGE = goloop-icon
@@ -86,7 +86,7 @@ ifeq ($(MAKECMDGOALS) , bash)
 	KEY_PASSWORD ?="testtest"
 	USE_HEALTH_CHECK ?="false"
 	CTX_LEVEL ?= "debug"
-	DOWNLOAD_OPTION ?="-V -j10 -x16 --http-accept-gzip --disk-cache=64M -c "
+	DOWNLOAD_OPTION ?="-V -j10 -x16 --http-accept-gzip --disk-cache=64M "
 #     GOLOOP_LOG_WRITER_FILENAME:="/goloop/logs/goloop.log"
 #     GOLOOP_LOG_WRITER_COMPRESS:="true"
 #     GOLOOP_LOG_WRITER_LOCALTIME:="true"

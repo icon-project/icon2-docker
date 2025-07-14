@@ -546,7 +546,7 @@ class Restore:
         if self.download_option:
             cmd_opt = f"{self.download_option} {_default_cmd_opt}"
         else:
-            cmd_opt = f'-V -j10 -x8 --http-accept-gzip --disk-cache=64M -c ' \
+            cmd_opt = f'-V -j10 -x8 --http-accept-gzip --disk-cache=64M ' \
                       f'{_default_cmd_opt}'
 
         self.cfg.logger.info(f"[RESTORE] Command option : '{cmd_opt}'")
