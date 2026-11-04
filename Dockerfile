@@ -54,5 +54,15 @@ RUN apk update && \
         /tmp/s6-overlay-amd64-installer / && \
         rm -rf /tmp/s6-overlay-amd64-installer
 
+# CVE-2026-91403 / CVE-2026-114820: openjdk11 on Alpine has no fixed package, so remove the
+# roots that upstream JDK-8395690 removes. Must run after the last apk step, which regenerates cacerts.
+ARG DISTRUSTED_ROOTS='^Owner: CN=(emSign Root CA - G1|emSign Root CA - G2|emSign ECC Root CA - G3|AAA Certificate Services),'
+RUN for alias in $(keytool -list -cacerts -storepass changeit | grep trustedCertEntry | cut -d, -f1); do \
+        if keytool -list -v -cacerts -storepass changeit -alias "${alias}" | grep -qE "${DISTRUSTED_ROOTS}"; then \
+            keytool -delete -cacerts -storepass changeit -alias "${alias}"; \
+        fi; \
+    done && \
+    ! keytool -list -v -cacerts -storepass changeit | grep -qE "${DISTRUSTED_ROOTS}"
+
 ENTRYPOINT []
 CMD /init
